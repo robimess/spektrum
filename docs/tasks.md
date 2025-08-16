@@ -100,8 +100,8 @@ Este documento organiza las tareas por historia de usuario, separadas por módul
 - [ ] Permitir selección de rol durante el inicio de sesión o registro.
 - [ ] Crear vista de selector de rol en configuración (con opción editable).
 - [ ] Modificar lógica de IA para ajustar recomendaciones según el rol:
-- [ ] FOH: sugerencias enfocadas en EQ general, resonancias de sala.
-- [ ] Monitores: sugerencias enfocadas en frecuencias por canal, feedback de cercanía.
+    - [ ] FOH: sugerencias enfocadas en EQ general, resonancias de sala.
+    - [ ] Monitores: sugerencias enfocadas en frecuencias por canal, feedback de cercanía.
 - [ ] Ajustar logs y feedbacks registrados incluyendo el rol como contexto.
 - [ ] Agregar test unitario que valide que las decisiones de IA cambian según el rol.
 - [ ] Agregar validación UX/UI para que el usuario entienda por qué se recomienda una acción según su rol.
