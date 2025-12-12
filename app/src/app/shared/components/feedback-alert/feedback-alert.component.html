@@ -1,0 +1,22 @@
+<div class="feedback-alerts">
+  <div *ngFor="let event of activeEvents" class="alert alert-danger">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-content">
+      <strong>Feedback detectado</strong>
+      <div class="freq-display">{{ formatFreq(event.frequency) }}</div>
+      <div class="magnitude">{{ event.magnitudeDb.toFixed(1) }} dB</div>
+    </div>
+  </div>
+
+  <div *ngIf="currentSuggestion" 
+       class="alert alert-suggestion"
+       [class.severity-high]="currentSuggestion.severity === 'high'"
+       [class.severity-medium]="currentSuggestion.severity === 'medium'">
+    <div class="alert-icon">💡</div>
+    <div class="alert-content">
+      <strong>Sugerencia</strong>
+      <p>{{ currentSuggestion.message }}</p>
+    </div>
+    <button class="dismiss-btn" (click)="dismiss()">✕</button>
+  </div>
+</div>

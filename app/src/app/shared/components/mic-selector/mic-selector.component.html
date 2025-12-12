@@ -1,0 +1,13 @@
+<div class="mic-selector">
+  <label>Micrófono:</label>
+  
+  <div *ngIf="loading" class="loading">Cargando dispositivos...</div>
+  
+  <select *ngIf="!loading" 
+          [value]="selectedId" 
+          (change)="selectDevice($any($event.target).value)">
+    <option *ngFor="let device of devices" [value]="device.id">
+      {{ device.label }}
+    </option>
+  </select>
+</div>

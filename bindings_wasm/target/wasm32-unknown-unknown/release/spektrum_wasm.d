@@ -1,0 +1,1 @@
+C:\spektrum\bindings_wasm\target\wasm32-unknown-unknown\release\spektrum_wasm.wasm: C:\spektrum\bindings_wasm\src\lib.rs C:\spektrum\core\src\dsp.rs C:\spektrum\core\src\lib.rs C:\spektrum\core\src\spectrogram.rs C:\spektrum\core\src\sugerencias.rs C:\spektrum\core\src\usuario.rs
