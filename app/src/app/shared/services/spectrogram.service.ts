@@ -23,6 +23,11 @@ export class SpectrogramService {
   private rawCb?: RawSpectrumCb;
 
   private initialized = false;
+  private preferredMicId?: string;
+  private lastRawEmitAt = 0;
+  private readonly rawEmitMinIntervalMs = 1000 / 30; // suficiente para UI + feedback sin saturar main thread
+  private readonly analyserMinDbFs = -110;
+  private readonly analyserMaxDbFs = 0;
 
   private cfg = {
     sampleRate: 48_000,
@@ -34,63 +39,63 @@ export class SpectrogramService {
   async init(sampleRate = 48_000, fft = 1024, hop = 256, binsOut = 128) {
     if (this.initialized) return;
     this.initialized = true;
+    this.lastRawEmitAt = 0;
 
-    this.cfg.sampleRate = sampleRate;
-    this.cfg.fft = fft;
-    this.cfg.hop = hop;
-    this.cfg.height = binsOut;
-    this.binsOut = binsOut;
+    try {
+      this.cfg.sampleRate = sampleRate;
+      this.cfg.fft = fft;
+      this.cfg.hop = hop;
+      this.cfg.height = binsOut;
+      this.binsOut = binsOut;
 
-    this.audio = new AudioContext({ sampleRate });
-    await this.audio.audioWorklet.addModule('/assets/recorder-processor.js');
+      this.audio = new AudioContext({ sampleRate });
+      await this.audio.audioWorklet.addModule('/assets/recorder-processor.js');
 
-    this.wasmMod = await loadSpektrumWasm();
+      this.wasmMod = await loadSpektrumWasm();
 
-    const cfg = new this.wasmMod.WasmSpectrogramConfig();
-    cfg.sample_rate = this.audio.sampleRate;
-    cfg.fft_size    = fft;
-    cfg.hop_size    = hop;
-    cfg.ref_power   = 1.0;
-    cfg.min_db      = -100;
-    cfg.max_db      = 0;
-    cfg.bins_out    = binsOut;
-    cfg.window_kind = 0;
+      const cfg = new this.wasmMod.WasmSpectrogramConfig();
+      cfg.sample_rate = this.audio.sampleRate;
+      cfg.fft_size    = fft;
+      cfg.hop_size    = hop;
+      cfg.ref_power   = 1.0;
+      cfg.min_db      = -100;
+      cfg.max_db      = 0;
+      cfg.bins_out    = binsOut;
+      cfg.window_kind = 0;
 
-    this.spec = new this.wasmMod.WasmSpectrogram(cfg);
+      this.spec = new this.wasmMod.WasmSpectrogram(cfg);
 
-    this.micStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        channelCount: 1,
-        noiseSuppression: false,
-        echoCancellation: false,
-        autoGainControl: false,
+      this.micStream = await this.createMicStream();
+
+      const src = new MediaStreamAudioSourceNode(this.audio, { mediaStream: this.micStream });
+
+      this.worklet = new AudioWorkletNode(this.audio, 'spektrum-recorder', {
+        numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1], channelCount: 1
+      });
+      this.worklet.port.onmessage = (ev: MessageEvent) => this.onFrame(ev.data as Float32Array);
+
+      this.analyser = new AnalyserNode(this.audio, {
+        fftSize: fft,
+        smoothingTimeConstant: 0,
+        minDecibels: this.analyserMinDbFs,
+        maxDecibels: this.analyserMaxDbFs,
+      });
+      this.fftDbArray = new Float32Array(this.analyser.frequencyBinCount);
+      this.fftMagLin  = new Float32Array(this.analyser.frequencyBinCount);
+
+      this.sink = new GainNode(this.audio, { gain: 0 });
+
+      src.connect(this.worklet);
+      this.worklet.connect(this.analyser);
+      this.worklet.connect(this.sink).connect(this.audio.destination);
+
+      if (this.audio.state === 'suspended') {
+        try { await this.audio.resume(); } catch {}
       }
-    });
-
-    const src = new MediaStreamAudioSourceNode(this.audio, { mediaStream: this.micStream });
-
-    this.worklet = new AudioWorkletNode(this.audio, 'spektrum-recorder', {
-      numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1], channelCount: 1
-    });
-    this.worklet.port.onmessage = (ev: MessageEvent) => this.onFrame(ev.data as Float32Array);
-
-    this.analyser = new AnalyserNode(this.audio, {
-      fftSize: fft,
-      smoothingTimeConstant: 0,
-      minDecibels: -100,
-      maxDecibels: -10,
-    });
-    this.fftDbArray = new Float32Array(this.analyser.frequencyBinCount);
-    this.fftMagLin  = new Float32Array(this.analyser.frequencyBinCount);
-
-    this.sink = new GainNode(this.audio, { gain: 0 });
-
-    src.connect(this.worklet);
-    this.worklet.connect(this.analyser);
-    this.worklet.connect(this.sink).connect(this.audio.destination);
-
-    if (this.audio.state === 'suspended') {
-      try { await this.audio.resume(); } catch {}
+    } catch (error) {
+      this.initialized = false;
+      await this.destroy();
+      throw error;
     }
   }
 
@@ -106,20 +111,29 @@ export class SpectrogramService {
     this.rawCb = cb;
   }
 
+  setPreferredMic(deviceId?: string | null) {
+    const next = (deviceId ?? '').trim();
+    this.preferredMicId = next || undefined;
+  }
+
   private onFrame(frame: Float32Array) {
     if (this.spec) {
       const flat = this.spec.process(frame);
       if (flat) {
-        const arr = new Float32Array(flat);
+        const arr = flat instanceof Float32Array ? flat : new Float32Array(flat);
         const colsCount = Math.floor(arr.length / this.binsOut);
         for (const cb of this.columnsSubs) cb(arr, this.binsOut, colsCount);
       }
     }
 
     if (this.rawCb && this.analyser && this.fftDbArray && this.fftMagLin) {
-      const tempArray = new Float32Array(this.fftDbArray.length);
-      this.analyser.getFloatFrequencyData(tempArray);
-      this.fftDbArray.set(tempArray);
+      const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      if (this.lastRawEmitAt && (now - this.lastRawEmitAt) < this.rawEmitMinIntervalMs) {
+        return;
+      }
+      this.lastRawEmitAt = now;
+
+      this.analyser.getFloatFrequencyData(this.fftDbArray);
       
       for (let i = 0; i < this.fftDbArray.length; i++) {
         const db = this.fftDbArray[i];
@@ -148,6 +162,7 @@ export class SpectrogramService {
     this.fftDbArray = undefined;
     this.fftMagLin = undefined;
     this.spec = undefined;
+    this.lastRawEmitAt = 0;
     this.initialized = false;
   }
 
@@ -159,5 +174,26 @@ export class SpectrogramService {
     const sr = this.currentSampleRate();
     await this.destroy();
     await this.init(sr, fft, hop, binsOut);
+  }
+
+  private async createMicStream(): Promise<MediaStream> {
+    const baseAudioConstraints: MediaTrackConstraints = {
+      channelCount: 1,
+      noiseSuppression: false,
+      echoCancellation: false,
+      autoGainControl: false,
+    };
+
+    if (this.preferredMicId) {
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          audio: { ...baseAudioConstraints, deviceId: { exact: this.preferredMicId } }
+        });
+      } catch (error) {
+        console.warn('No se pudo abrir el micrófono seleccionado, usando el predeterminado.', error);
+      }
+    }
+
+    return navigator.mediaDevices.getUserMedia({ audio: baseAudioConstraints });
   }
 }

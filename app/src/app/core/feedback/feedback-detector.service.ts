@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
 import { PeakDetectionService, PeakInfo } from '../dsp/peak-detection.service';
 
@@ -11,6 +11,7 @@ export enum FeedbackSeverity {
 
 export interface FeedbackEvent {
   readonly id: string;
+  readonly eventKey: string;
   readonly timestamp: Date;
   readonly frequency: number;
   readonly magnitude: number;
@@ -36,10 +37,12 @@ interface ActiveFeedback {
   startTime: number;
   lastSeen: number;
   eventId: string;
+  eventKey: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackDetectorService {
+  private readonly peakDetection = inject(PeakDetectionService);
   private feedbackSubject = new Subject<FeedbackEvent>();
   private activeFeedbacks = new Map<number, ActiveFeedback>();
   private eventCounter = 0;
@@ -52,8 +55,6 @@ export class FeedbackDetectorService {
     maxFreqHz: 16000,
     minSpacingHz: 50
   };
-
-  constructor(private peakDetection: PeakDetectionService) {}
 
   get feedback$(): Observable<FeedbackEvent> {
     return this.feedbackSubject.asObservable();
@@ -103,7 +104,8 @@ export class FeedbackDetectorService {
           peak,
           startTime: currentTime,
           lastSeen: currentTime,
-          eventId: this.generateEventId()
+          eventId: this.generateEventId(),
+          eventKey: this.toStableEventKey(peak.frequency),
         });
       }
     }
@@ -130,6 +132,7 @@ export class FeedbackDetectorService {
 
     const event: FeedbackEvent = {
       id: active.eventId,
+      eventKey: active.eventKey,
       timestamp: new Date(active.startTime),
       frequency: active.peak.frequency,
       magnitude: active.peak.magnitude,
@@ -169,6 +172,12 @@ export class FeedbackDetectorService {
 
   private generateEventId(): string {
     return `fb-${++this.eventCounter}-${Date.now()}`;
+  }
+
+  private toStableEventKey(frequency: number): string {
+    const clampedHz = Math.max(20, Math.min(22000, frequency));
+    const halfOctaveBucket = Math.round(2 * Math.log2(clampedHz / 1000));
+    return `fb-${halfOctaveBucket}`;
   }
 
   reset(): void {

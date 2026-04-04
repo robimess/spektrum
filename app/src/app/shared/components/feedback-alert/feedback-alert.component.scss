@@ -6,7 +6,9 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-width: 380px;
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
   pointer-events: none;
 
   .alert {
@@ -28,6 +30,11 @@
         font-size: 24px;
         font-weight: bold;
         color: #ff3b30;
+      }
+
+      &.is-stale {
+        opacity: 0.7;
+        transition: opacity 180ms ease;
       }
     }
 
@@ -71,6 +78,18 @@
         color: #999;
         margin-top: 4px;
       }
+
+      .secondary-info {
+        margin-top: 6px;
+        font-size: 12px;
+        color: #b8b8b8;
+      }
+
+      .live-metrics {
+        margin-top: 4px;
+        font-size: 12px;
+        color: #d6d6d6;
+      }
     }
 
     .dismiss-btn {
@@ -92,6 +111,16 @@
         color: #fff;
       }
     }
+  }
+}
+
+@media (max-width: 640px) {
+  .feedback-alerts {
+    top: 72px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-height: 45vh;
   }
 }
 

@@ -19,14 +19,15 @@ export class ConfigStorageService {
   }
 
   updateConfig(partial: Partial<UserConfig>) {
-    const updated = { ...this.configSubject.value, ...partial };
+    const updated = this.sanitizeConfig({ ...this.configSubject.value, ...partial });
     this.configSubject.next(updated);
     this.saveConfig(updated);
   }
 
   resetToDefaults() {
-    this.configSubject.next({ ...DEFAULT_USER_CONFIG });
-    this.saveConfig(DEFAULT_USER_CONFIG);
+    const reset = this.sanitizeConfig({ ...DEFAULT_USER_CONFIG });
+    this.configSubject.next(reset);
+    this.saveConfig(reset);
   }
 
   private saveConfig(config: UserConfig) {
@@ -42,11 +43,50 @@ export class ConfigStorageService {
       const stored = localStorage.getItem(this.STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        return { ...DEFAULT_USER_CONFIG, ...parsed };
+        return this.sanitizeConfig({ ...DEFAULT_USER_CONFIG, ...parsed });
       }
     } catch (e) {
       console.warn('No se pudo cargar configuración', e);
     }
-    return { ...DEFAULT_USER_CONFIG };
+    return this.sanitizeConfig({ ...DEFAULT_USER_CONFIG });
+  }
+
+  private sanitizeConfig(config: UserConfig): UserConfig {
+    const clamp = (value: number, min: number, max: number): number =>
+      Math.max(min, Math.min(max, value));
+    const asNumber = (value: unknown, fallback: number): number =>
+      Number.isFinite(Number(value)) ? Number(value) : fallback;
+
+    const feedbackThresholdDb = clamp(
+      asNumber(config.feedbackThresholdDb, DEFAULT_USER_CONFIG.feedbackThresholdDb),
+      6,
+      40
+    );
+    const feedbackMinDurationMs = Math.round(
+      clamp(
+        asNumber(config.feedbackMinDurationMs, DEFAULT_USER_CONFIG.feedbackMinDurationMs),
+        600,
+        5000
+      )
+    );
+
+    const feedbackMinFreq = Math.round(
+      clamp(asNumber(config.feedbackMinFreq, DEFAULT_USER_CONFIG.feedbackMinFreq), 20, 20000)
+    );
+    const feedbackMaxFreq = Math.round(
+      clamp(asNumber(config.feedbackMaxFreq, DEFAULT_USER_CONFIG.feedbackMaxFreq), feedbackMinFreq + 20, 22000)
+    );
+
+    return {
+      ...config,
+      gamma: clamp(asNumber(config.gamma, DEFAULT_USER_CONFIG.gamma), 0.5, 3.5),
+      holdMs: Math.round(clamp(asNumber(config.holdMs, DEFAULT_USER_CONFIG.holdMs), 0, 999999)),
+      sampleRate: Math.round(clamp(asNumber(config.sampleRate, DEFAULT_USER_CONFIG.sampleRate), 8000, 192000)),
+      fftSize: Math.round(clamp(asNumber(config.fftSize, DEFAULT_USER_CONFIG.fftSize), 512, 32768)),
+      feedbackMinFreq,
+      feedbackMaxFreq,
+      feedbackThresholdDb,
+      feedbackMinDurationMs,
+    };
   }
 }

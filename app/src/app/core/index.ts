@@ -4,6 +4,7 @@ export * from './audio/audio-device.service';
 export * from './dsp/octave-band.service';
 export * from './dsp/peak-detection.service';
 export * from './dsp/signal-smoothing.service';
+export * from './dsp/device-calibration.service';
 
 export * from './feedback/feedback-detector.service';
 export * from './feedback/ai-suggestions.service';
@@ -14,3 +15,4 @@ export * from './storage/feedback-log.service';
 export * from './performance/performance-monitor.service';
 
 export * from './constants/audio.constants';
+export * from './models/calibration.types';

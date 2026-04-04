@@ -1,5 +1,6 @@
 export interface FeedbackEvent {
   readonly id: string;
+  readonly eventKey: string;
   readonly frequency: number;
   readonly magnitude: number;
   readonly magnitudeDb: number;

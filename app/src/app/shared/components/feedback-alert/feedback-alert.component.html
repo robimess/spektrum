@@ -1,20 +1,30 @@
 <div class="feedback-alerts">
-  <div *ngFor="let event of activeEvents" class="alert alert-danger">
+  <div *ngIf="primaryEvent as event" class="alert alert-danger" [class.is-stale]="warningStale">
     <div class="alert-icon">⚠️</div>
     <div class="alert-content">
       <strong>Feedback detectado</strong>
       <div class="freq-display">{{ formatFreq(event.frequency) }}</div>
-      <div class="magnitude">{{ event.magnitudeDb.toFixed(1) }} dB</div>
+      <div class="magnitude">
+        {{ event.magnitudeDb.toFixed(1) }} dB
+        <span *ngIf="event.overThresholdDb !== null"> · +{{ formatPositiveDb(event.overThresholdDb) }} sobre umbral</span>
+      </div>
+      <div *ngIf="extraActiveCount > 0" class="secondary-info">
+        +{{ extraActiveCount }} feedback{{ extraActiveCount > 1 ? 's' : '' }} adicional{{ extraActiveCount > 1 ? 'es' : '' }}
+      </div>
     </div>
   </div>
 
-  <div *ngIf="currentSuggestion" 
+  <div *ngIf="currentSuggestion && primaryEvent" 
        class="alert alert-suggestion"
        [class.severity-high]="currentSuggestion.severity === 'high'"
        [class.severity-medium]="currentSuggestion.severity === 'medium'">
     <div class="alert-icon">💡</div>
     <div class="alert-content">
       <strong>Sugerencia</strong>
+      <div class="live-metrics">
+        {{ formatFreq(currentSuggestion.frequency) }} · {{ currentSuggestion.magnitudeDb.toFixed(1) }} dB
+        <span *ngIf="currentSuggestion.overThresholdDb !== null"> · +{{ formatPositiveDb(currentSuggestion.overThresholdDb) }} sobre umbral</span>
+      </div>
       <p>{{ currentSuggestion.message }}</p>
     </div>
     <button class="dismiss-btn" (click)="dismiss()">✕</button>

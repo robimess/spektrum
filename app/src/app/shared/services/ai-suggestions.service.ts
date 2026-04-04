@@ -7,6 +7,9 @@ export interface Suggestion {
   id: string;
   message: string;
   frequency: number;
+  magnitudeDb: number;
+  relativeDb?: number;
+  overThresholdDb?: number;
   severity: 'low' | 'medium' | 'high';
   timestamp: number;
 }
@@ -37,12 +40,15 @@ export class AiSuggestionsService {
     const freq = Math.round(strongest.frequency);
     const severity = this.determineSeverity(strongest.magnitudeDb);
     
-    const message = this.buildMessage(freq, this.userRole);
+    const message = this.buildMessage(strongest, this.userRole);
 
     const suggestion: Suggestion = {
-      id: `sug-${Date.now()}`,
+      id: `sug-${strongest.eventKey}`,
       message,
       frequency: freq,
+      magnitudeDb: strongest.magnitudeDb,
+      relativeDb: strongest.relativeDb,
+      overThresholdDb: strongest.overThresholdDb,
       severity,
       timestamp: Date.now(),
     };
@@ -50,23 +56,28 @@ export class AiSuggestionsService {
     this.suggestionsSubject.next(suggestion);
   }
 
-  private buildMessage(freq: number, role: UserRole): string {
+  private buildMessage(event: FeedbackEvent, role: UserRole): string {
+    const freq = Math.round(event.frequency);
     const freqStr = freq >= 1000 
       ? `${(freq / 1000).toFixed(1)} kHz` 
       : `${freq} Hz`;
+    const magStr = `${event.magnitudeDb.toFixed(1)} dB`;
+    const excessStr = typeof event.overThresholdDb === 'number'
+      ? ` | Exceso: +${Math.max(0, event.overThresholdDb).toFixed(1)} dB`
+      : '';
 
     switch (role) {
       case 'foh':
-        return `FOH → Detectado feedback en ${freqStr}. Considera atenuar en el EQ general de sala o aplicar filtro notch en la cadena principal.`;
+        return `FOH → Feedback en ${freqStr} (${magStr}${excessStr}). Aplique notch estrecho y reduzca ganancia del canal/sistema.`;
       
       case 'monitors':
-        return `Monitores → Feedback en ${freqStr}. Revisa los envíos al monitor afectado y aplica filtro notch en el canal correspondiente.`;
+        return `Monitores → Feedback en ${freqStr} (${magStr}${excessStr}). Revise envío al wedge/IEM y aplique notch en el canal.`;
       
       case 'broadcast':
-        return `Broadcast → Feedback en ${freqStr}. Verifica las ganancias de entrada y aplica filtro en la cadena de transmisión.`;
+        return `Broadcast → Feedback en ${freqStr} (${magStr}${excessStr}). Ajuste ganancia y filtre en la cadena de transmisión.`;
       
       default:
-        return `Feedback detectado en ${freqStr}. Reduce la ganancia o aplica filtro notch en esa frecuencia.`;
+        return `Feedback detectado en ${freqStr} (${magStr}${excessStr}). Reduce ganancia o aplica notch en esa frecuencia.`;
     }
   }
 

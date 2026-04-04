@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
 import { 
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, 
   IonContent, IonList, IonItem, IonLabel, ModalController 
@@ -17,16 +18,24 @@ import { FeedbackLogService, LogEntry } from '../../services/feedback-log.servic
   templateUrl: './feedback-log-modal.component.html',
   styleUrls: ['./feedback-log-modal.component.scss'],
 })
-export class FeedbackLogModalComponent implements OnInit {
-  logs: LogEntry[] = [];
+export class FeedbackLogModalComponent implements OnInit, OnDestroy {
+  private readonly modalCtrl = inject(ModalController);
+  private readonly feedbackLog = inject(FeedbackLogService);
 
-  constructor(
-    private modalCtrl: ModalController,
-    private feedbackLog: FeedbackLogService
-  ) {}
+  logs: LogEntry[] = [];
+  private readonly subs = new Subscription();
 
   ngOnInit() {
     this.logs = this.feedbackLog.getLogs();
+    this.subs.add(
+      this.feedbackLog.logs$.subscribe(logs => {
+        this.logs = logs;
+      })
+    );
+  }
+
+  ngOnDestroy() {
+    this.subs.unsubscribe();
   }
 
   close() {

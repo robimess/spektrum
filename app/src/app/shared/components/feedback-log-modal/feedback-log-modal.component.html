@@ -26,7 +26,10 @@
       <ion-label>
         <h2>{{ formatFreq(log.frequency) }}</h2>
         <p>{{ log.date }} - {{ log.time }}</p>
-        <p class="details">{{ log.magnitudeDb }} dB • {{ log.duration }}ms</p>
+        <p class="details">
+          {{ log.magnitudeDb }} dB • {{ log.duration }}ms
+          <span *ngIf="(log.occurrences ?? 1) > 1"> • x{{ log.occurrences }}</span>
+        </p>
       </ion-label>
     </ion-item>
   </ion-list>

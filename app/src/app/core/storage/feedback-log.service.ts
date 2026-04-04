@@ -24,6 +24,8 @@ export class FeedbackLogService {
 
   private logsSubject: BehaviorSubject<LogEntry[]>;
   private sessionId: string;
+  private lastAcceptedByKey = new Map<string, number>();
+  private readonly eventKeyCooldownMs = 10000;
 
   constructor() {
     this.sessionId = this.generateSessionId();
@@ -40,6 +42,11 @@ export class FeedbackLogService {
   }
 
   addEvent(event: FeedbackEvent): void {
+    const now = Date.now();
+    const eventKey = this.getEventKey(event);
+    const lastAccepted = this.lastAcceptedByKey.get(eventKey) ?? 0;
+    if ((now - lastAccepted) < this.eventKeyCooldownMs) return;
+
     const logs = this.logsSubject.value;
     const entry: LogEntry = {
       event,
@@ -49,6 +56,7 @@ export class FeedbackLogService {
     const updated = [entry, ...logs].slice(0, this.MAX_ENTRIES);
     this.saveLogs(updated);
     this.logsSubject.next(updated);
+    this.lastAcceptedByKey.set(eventKey, now);
   }
 
   updateEntry(eventId: string, updates: Partial<LogEntry>): void {
@@ -160,13 +168,17 @@ export class FeedbackLogService {
       if (!stored) return [];
 
       const parsed = JSON.parse(stored);
-      return parsed.map((entry: any) => ({
+      const logs = parsed.map((entry: any) => ({
         ...entry,
         event: {
           ...entry.event,
           timestamp: new Date(entry.event.timestamp)
         }
       }));
+      logs.forEach((entry: LogEntry) => {
+        this.lastAcceptedByKey.set(this.getEventKey(entry.event), entry.event.timestamp.getTime());
+      });
+      return logs;
     } catch (error) {
       console.error('Failed to load logs:', error);
       return [];
@@ -199,5 +211,12 @@ export class FeedbackLogService {
 
   private generateSessionId(): string {
     return `session-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+  }
+
+  private getEventKey(event: FeedbackEvent): string {
+    if (event.eventKey) return event.eventKey;
+    const clampedHz = Math.max(20, Math.min(22000, event.frequency));
+    const halfOctaveBucket = Math.round(2 * Math.log2(clampedHz / 1000));
+    return `fb-${halfOctaveBucket}`;
   }
 }

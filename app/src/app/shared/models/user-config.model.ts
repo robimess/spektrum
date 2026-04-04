@@ -41,8 +41,8 @@ export const DEFAULT_USER_CONFIG: UserConfig = {
   feedbackEnabled: true,
   feedbackMinFreq: 250,
   feedbackMaxFreq: 18000,
-  feedbackThresholdDb: 15,
-  feedbackMinDurationMs: 300,
+  feedbackThresholdDb: 16,
+  feedbackMinDurationMs: 1000,
   
   aiEnabled: true,
   userRole: 'foh',

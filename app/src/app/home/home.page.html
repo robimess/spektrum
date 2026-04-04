@@ -35,6 +35,40 @@
       </label>
     </div>
 
+    <section class="calibration-panel">
+      <div class="calibration-title">Calibración Mic/Dispositivo</div>
+
+      <div class="controls-row">
+        <label class="control-item">
+          <input type="checkbox" [checked]="calibrationEnabled" (change)="onCalibrationToggle($any($event.target).checked)">
+          Compensación activa
+        </label>
+
+        <label class="control-item">
+          Alcance:
+          <select [value]="calibrationScope" (change)="onCalibrationScopeChange($any($event.target).value)">
+            <option value="device">Micrófono actual</option>
+            <option value="global">Global</option>
+          </select>
+        </label>
+
+        <label class="control-item file-control">
+          Curva JSON:
+          <input type="file" accept=".json,application/json" (change)="onCalibrationFileSelected($event)">
+        </label>
+
+        <button class="action-btn" type="button" (click)="clearCalibrationTarget()">Quitar curva</button>
+      </div>
+
+      <div class="calibration-status">
+        <div><strong>Objetivo:</strong> {{ calibrationTargetLabel }}</div>
+        <div><strong>Aplicada:</strong> {{ calibrationAppliedLabel }}</div>
+        <div>{{ calibrationInfo }}</div>
+      </div>
+
+      <p *ngIf="calibrationError" class="calibration-error">{{ calibrationError }}</p>
+    </section>
+
 <canvas
   #specCanvas
   [style.display]="view==='spectrogram' ? 'block' : 'none'"
@@ -49,7 +83,7 @@
       [useColor]="useColor" 
       [showGrid]="showGrid" 
       [gamma]="gamma" 
-      [palette]="palette" 
+      [palette]="paletteObj" 
       #bars>
     </app-bars-view>
 
@@ -92,9 +126,9 @@
         </select>
       </label>
 
-      <label class="control-item">
+      <label class="control-item" *ngIf="view==='bars'">
         HOLD:
-        <select [value]="holdMs" (change)="onHoldChange(+$any($event.target).value)">
+        <select [value]="holdMs" (change)="onHoldChange($any($event.target).value)">
           <option [value]="0">Off</option>
           <option [value]="500">0.5s</option>
           <option [value]="1000">1s</option>
