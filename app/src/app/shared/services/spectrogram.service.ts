@@ -51,7 +51,7 @@ export class SpectrogramService {
   private lastClippingAt = 0;
   private streamEnded = false;
   private captureError?: string;
-  private readonly rawEmitMinIntervalMs = 1000 / 30; // suficiente para UI + feedback sin saturar main thread
+  private readonly rawEmitMinIntervalMs = 1000 / 60; // 60 Hz for responsive spectrogram
   private readonly analyserMinDbFs = -110;
   private readonly analyserMaxDbFs = 0;
   private readonly captureDefaults = DEFAULT_AUDIO_CAPTURE_PREFERENCES;
@@ -378,36 +378,60 @@ export class SpectrogramService {
       throw new Error('AudioContext no inicializado.');
     }
 
-    const mix = new GainNode(this.audio, { gain: 0.7 });
-    const mainTone = new OscillatorNode(this.audio, { type: 'sine', frequency: 880 });
-    const highTone = new OscillatorNode(this.audio, { type: 'triangle', frequency: 3150 });
-    const lowTone = new OscillatorNode(this.audio, { type: 'sine', frequency: 160 });
-    const sweepTone = new OscillatorNode(this.audio, { type: 'sawtooth', frequency: 440 });
-    const pulse = new OscillatorNode(this.audio, { type: 'sine', frequency: 0.18 });
+    const mix = new GainNode(this.audio, { gain: 0.5 });
 
-    const mainGain = new GainNode(this.audio, { gain: 0.7 });
-    const highGain = new GainNode(this.audio, { gain: 0.35 });
-    const lowGain = new GainNode(this.audio, { gain: 0.25 });
-    const sweepGain = new GainNode(this.audio, { gain: 0.15 });
-    const pulseDepth = new GainNode(this.audio, { gain: 0.25 });
-    const pulseOffset = new ConstantSourceNode(this.audio, { offset: 0.75 });
+    // Frequency sweep fundamental: 40 Hz → 18 kHz over 6 seconds, repeating
+    const sweepFund = new OscillatorNode(this.audio, { type: 'sawtooth', frequency: 40 });
+    const sweepFundGain = new GainNode(this.audio, { gain: 0.4 });
+    sweepFund.connect(sweepFundGain).connect(mix);
 
-    mainTone.connect(mainGain).connect(mix);
-    highTone.connect(highGain).connect(mix);
-    lowTone.connect(lowGain).connect(mix);
-    sweepTone.connect(sweepGain).connect(mix);
-    pulse.connect(pulseDepth).connect(mainGain.gain);
-    pulseOffset.connect(mainGain.gain);
+    // 2nd harmonic sweep
+    const sweep2 = new OscillatorNode(this.audio, { type: 'sine', frequency: 80 });
+    const sweep2Gain = new GainNode(this.audio, { gain: 0.15 });
+    sweep2.connect(sweep2Gain).connect(mix);
 
-    mainTone.start();
-    highTone.start();
-    lowTone.start();
-    sweepTone.start();
-    pulse.start();
-    pulseOffset.start();
+    // 3rd harmonic sweep
+    const sweep3 = new OscillatorNode(this.audio, { type: 'sine', frequency: 120 });
+    const sweep3Gain = new GainNode(this.audio, { gain: 0.08 });
+    sweep3.connect(sweep3Gain).connect(mix);
 
-    this.demoSources = [mainTone, highTone, lowTone, sweepTone, pulse, pulseOffset];
-    this.demoNodes = [mainGain, highGain, lowGain, sweepGain, pulseDepth];
+    // Animate all sweep frequencies in sync
+    const now = this.audio.currentTime;
+    const sweepDuration = 6;
+    const minFreq = 40;
+    const maxFreq = 18000;
+
+    for (let cycle = 0; cycle < 200; cycle++) {
+      const t0 = now + cycle * sweepDuration;
+      // Fundamental
+      sweepFund.frequency.setValueAtTime(minFreq, t0);
+      sweepFund.frequency.exponentialRampToValueAtTime(maxFreq, t0 + sweepDuration * 0.95);
+      sweepFund.frequency.setValueAtTime(minFreq, t0 + sweepDuration);
+      // 2nd harmonic
+      sweep2.frequency.setValueAtTime(minFreq * 2, t0);
+      sweep2.frequency.exponentialRampToValueAtTime(Math.min(maxFreq, maxFreq * 2), t0 + sweepDuration * 0.95);
+      sweep2.frequency.setValueAtTime(minFreq * 2, t0 + sweepDuration);
+      // 3rd harmonic
+      sweep3.frequency.setValueAtTime(minFreq * 3, t0);
+      sweep3.frequency.exponentialRampToValueAtTime(Math.min(maxFreq, maxFreq * 3), t0 + sweepDuration * 0.95);
+      sweep3.frequency.setValueAtTime(minFreq * 3, t0 + sweepDuration);
+    }
+
+    // LFO amplitude modulation for visual interest
+    const lfo = new OscillatorNode(this.audio, { type: 'sine', frequency: 0.3 });
+    const lfoDepth = new GainNode(this.audio, { gain: 0.2 });
+    const lfoOffset = new ConstantSourceNode(this.audio, { offset: 0.8 });
+    lfo.connect(lfoDepth).connect(sweepFundGain.gain);
+    lfoOffset.connect(sweepFundGain.gain);
+
+    sweepFund.start();
+    sweep2.start();
+    sweep3.start();
+    lfo.start();
+    lfoOffset.start();
+
+    this.demoSources = [sweepFund, sweep2, sweep3, lfo, lfoOffset];
+    this.demoNodes = [sweepFundGain, sweep2Gain, sweep3Gain, lfoDepth];
 
     return mix;
   }
