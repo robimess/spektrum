@@ -2,35 +2,53 @@
   <ion-toolbar>
     <ion-title>Historial de Feedback</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="close()">Cerrar</ion-button>
+      <ion-button (click)="close()">
+        <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+      </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
   <div class="log-actions">
-    <button class="btn btn-primary" (click)="exportCsv()" [disabled]="logs.length === 0">
-      📥 Exportar CSV
-    </button>
-    <button class="btn btn-danger" (click)="clearAll()" [disabled]="logs.length === 0">
-      🗑️ Limpiar Todo
-    </button>
+    <ion-button fill="solid" color="primary" size="small" (click)="exportCsv()" [disabled]="logs.length === 0">
+      <ion-icon name="download-outline" slot="start"></ion-icon>
+      Exportar CSV
+    </ion-button>
+    <ion-button fill="outline" color="danger" size="small" (click)="clearAll()" [disabled]="logs.length === 0">
+      <ion-icon name="trash-outline" slot="start"></ion-icon>
+      Limpiar Todo
+    </ion-button>
   </div>
+
+  <p *ngIf="exportMessage" class="export-message">{{ exportMessage }}</p>
 
   <div *ngIf="logs.length === 0" class="empty-state">
-    <p>No hay eventos de feedback registrados.</p>
+    <ion-icon name="document-text-outline"></ion-icon>
+    <p>Sin eventos de feedback aún</p>
+    <p class="empty-sub">Los picos sostenidos aparecerán aquí para exportarlos</p>
   </div>
 
-  <ion-list *ngIf="logs.length > 0">
-    <ion-item *ngFor="let log of logs">
-      <ion-label>
-        <h2>{{ formatFreq(log.frequency) }}</h2>
-        <p>{{ log.date }} - {{ log.time }}</p>
-        <p class="details">
-          {{ log.magnitudeDb }} dB • {{ log.duration }}ms
-          <span *ngIf="(log.occurrences ?? 1) > 1"> • x{{ log.occurrences }}</span>
-        </p>
-      </ion-label>
-    </ion-item>
-  </ion-list>
+  <div *ngIf="logs.length > 0" class="log-summary">
+    Mostrando {{ visibleLogs.length }} de {{ logs.length }} eventos
+  </div>
+
+  <div *ngIf="logs.length > 0" class="log-list">
+    <article *ngFor="let log of visibleLogs; trackBy: trackByLogId" class="log-card">
+      <div class="log-freq mono">{{ formatFreq(log.frequency) }}</div>
+      <div class="log-meta">
+        <span class="log-time">{{ log.date }} - {{ log.time }}</span>
+        <span class="log-details mono">
+          {{ log.magnitudeDb }} dB &middot; {{ log.duration }}ms
+          <span *ngIf="(log.occurrences ?? 1) > 1"> &middot; x{{ log.occurrences }}</span>
+        </span>
+      </div>
+    </article>
+  </div>
+
+  <div *ngIf="visibleLogs.length < logs.length" class="log-footer">
+    <ion-button fill="outline" color="medium" size="small" (click)="loadMore()">
+      Cargar {{ logs.length - visibleLogs.length > 100 ? 100 : logs.length - visibleLogs.length }} más
+    </ion-button>
+  </div>
 </ion-content>

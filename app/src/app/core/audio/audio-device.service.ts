@@ -1,5 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import {
+  DEFAULT_AUDIO_CAPTURE_PREFERENCES,
+  applyTrackContentHint,
+  buildAudioConstraintAttempts,
+} from './audio-capture.util';
 
 export interface AudioDevice {
   readonly id: string;
@@ -19,6 +24,7 @@ export class AudioDeviceService {
   public readonly errors$ = this.errorSubject.asObservable();
 
   private mediaStream: MediaStream | null = null;
+  private readonly captureDefaults = DEFAULT_AUDIO_CAPTURE_PREFERENCES;
 
   async initialize(): Promise<void> {
     try {
@@ -33,13 +39,7 @@ export class AudioDeviceService {
 
   async requestPermission(): Promise<void> {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        }
-      });
+      const stream = await this.openPreferredStream();
       
       stream.getTracks().forEach(track => track.stop());
     } catch (error) {
@@ -84,23 +84,14 @@ export class AudioDeviceService {
   }
 
   async createMediaStream(deviceId?: string): Promise<MediaStream> {
-    const targetDeviceId = deviceId || this.selectedDeviceSubject.value;
+    const targetDeviceId = deviceId || this.selectedDeviceSubject.value || undefined;
     
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => track.stop());
     }
 
     try {
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          deviceId: targetDeviceId ? { exact: targetDeviceId } : undefined,
-          channelCount: 1,
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-          sampleRate: 48000,
-        },
-      });
+      this.mediaStream = await this.openPreferredStream(targetDeviceId);
 
       return this.mediaStream;
     } catch (error) {
@@ -120,5 +111,33 @@ export class AudioDeviceService {
       this.mediaStream.getTracks().forEach(track => track.stop());
       this.mediaStream = null;
     }
+  }
+
+  private async openPreferredStream(deviceId?: string): Promise<MediaStream> {
+    const attempts = buildAudioConstraintAttempts({
+      deviceId,
+      sampleRate: this.captureDefaults.sampleRate,
+      channelCount: this.captureDefaults.channelCount,
+      sampleSize: this.captureDefaults.sampleSize,
+      latencyMs: this.captureDefaults.latencyMs,
+      contentHint: this.captureDefaults.contentHint,
+      latencyHint: this.captureDefaults.latencyHint,
+      windowType: this.captureDefaults.windowType,
+    });
+
+    let lastError: unknown;
+    for (const attempt of attempts) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: attempt.constraints });
+        applyTrackContentHint(stream.getAudioTracks()[0], this.captureDefaults.contentHint);
+        return stream;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError instanceof Error
+      ? lastError
+      : new Error('No compatible audio input stream could be created');
   }
 }

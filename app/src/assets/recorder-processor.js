@@ -5,8 +5,10 @@ class SpektrumRecorder extends AudioWorkletProcessor {
 
     if (input && input[0] && input[0].length) {
       const ch = input[0];
-      if (output && output[0]) {
-        output[0].set(ch);
+      const out = output && output[0];
+      if (out) {
+        const frames = Math.min(out.length, ch.length);
+        out.set(ch.subarray(0, frames));
       }
       this.port.postMessage(new Float32Array(ch));
     }

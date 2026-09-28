@@ -373,11 +373,13 @@ describe('End-to-End Audio Processing Tests', () => {
     });
 
     it('should handle invalid import gracefully', () => {
+      const errorSpy = spyOn(console, 'error');
       const invalidJson = '{ invalid json }';
       
       const success = configService.importConfig(invalidJson);
       
       expect(success).toBe(false);
+      expect(errorSpy).toHaveBeenCalled();
       
       // Config should remain unchanged
       const config = configService.getConfig();

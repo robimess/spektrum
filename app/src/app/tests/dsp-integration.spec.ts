@@ -330,6 +330,8 @@ describe('DSP Integration Tests', () => {
       signalSmoothingService.smooth(current, spectrum, 16, { attackMs: 50, releaseMs: 100 });
       const peaks = peakDetectionService.detectPeaks(current, sampleRate, fftSize, 0.5, 20, sampleRate / 2);
       
+      expect(bands.length).toBeGreaterThan(0);
+      expect(peaks).toBeInstanceOf(Array);
       peaks.forEach(peak => {
         expect(peak.frequency).toBeLessThanOrEqual(sampleRate / 2);
       });
@@ -386,4 +388,3 @@ describe('DSP Integration Tests', () => {
     return spectrum.slice(startBin, endBin + 1);
   }
 });
-

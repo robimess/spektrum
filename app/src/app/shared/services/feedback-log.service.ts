@@ -8,11 +8,19 @@ export interface LogEntry {
   frequency: number;
   magnitudeDb: number;
   timestamp: number;
+  isoTimestamp: string;
+  timezoneOffsetMinutes: number;
   lastTimestamp?: number;
   duration: number;
   occurrences?: number;
   date: string;
   time: string;
+}
+
+export interface LogExportResult {
+  readonly method: 'download' | 'clipboard' | 'inline';
+  readonly success: boolean;
+  readonly message: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -30,6 +38,7 @@ export class FeedbackLogService {
   private readonly globalMinIntervalMs = 3000;
   private readonly keyMinIntervalMs = 12000;
   private readonly strongEventOverThresholdDb = 8;
+  private readonly maxEntries = 1000;
   
   public logs$: Observable<LogEntry[]> = this.logsSubject.asObservable();
 
@@ -44,6 +53,7 @@ export class FeedbackLogService {
     if (event.duration < this.minLogDurationMs) return;
     if (overThresholdDb < this.minOverThresholdDb) return;
     if (event.magnitudeDb < this.minMagnitudeDb) return;
+    if (!this.isValidFrequency(event.frequency)) return;
 
     const similarIdx = this.findSimilarRecentIndex(eventKey, event.frequency, now);
     if (similarIdx >= 0) {
@@ -70,6 +80,8 @@ export class FeedbackLogService {
       frequency: Math.round(event.frequency),
       magnitudeDb: Math.round(event.magnitudeDb * 10) / 10,
       timestamp: now,
+      isoTimestamp: date.toISOString(),
+      timezoneOffsetMinutes: -date.getTimezoneOffset(),
       lastTimestamp: now,
       duration: Math.round(event.duration),
       occurrences: 1,
@@ -81,8 +93,8 @@ export class FeedbackLogService {
     this.lastAcceptedAt = now;
     this.lastAcceptedAtByKey.set(eventKey, now);
     
-    if (this.logs.length > 500) {
-      this.logs = this.logs.slice(0, 500);
+    if (this.logs.length > this.maxEntries) {
+      this.logs = this.logs.slice(0, this.maxEntries);
     }
 
     this.logsSubject.next([...this.logs]);
@@ -100,10 +112,12 @@ export class FeedbackLogService {
   }
 
   exportToCsv(): string {
-    const headers = ['Fecha', 'Hora', 'Frecuencia (Hz)', 'Magnitud (dB)', 'Duración (ms)', 'Repeticiones'];
+    const headers = ['Fecha', 'Hora', 'UTC ISO', 'UTC Offset (min)', 'Frecuencia (Hz)', 'Magnitud (dB)', 'Duración (ms)', 'Repeticiones'];
     const rows = this.logs.map(log => [
       log.date,
       log.time,
+      log.isoTimestamp,
+      String(log.timezoneOffsetMinutes),
       log.frequency.toString(),
       log.magnitudeDb.toFixed(1),
       log.duration.toString(),
@@ -111,21 +125,66 @@ export class FeedbackLogService {
     ]);
 
     const csv = [headers, ...rows]
-      .map(row => row.join(','))
-      .join('\n');
+      .map(row => row.map(field => this.csvQuoteField(field)).join(','))
+      .join('\r\n');
 
     return csv;
   }
 
-  downloadCsv() {
+  private csvQuoteField(field: string): string {
+    if (/[",\r\n]/.test(field)) {
+      return `"${field.replace(/"/g, '""')}"`;
+    }
+    if (/^[=+\-@\t\r]/.test(field)) {
+      return `'${field}`;
+    }
+    return field;
+  }
+
+  async downloadCsv(): Promise<LogExportResult> {
     const csv = this.exportToCsv();
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `spektrum-feedback-log-${Date.now()}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    const fileName = `spektrum-feedback-log-${Date.now()}.csv`;
+
+    try {
+      if (typeof document !== 'undefined' && typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        try {
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName;
+          link.click();
+          return {
+            method: 'download',
+            success: true,
+            message: 'CSV exportado correctamente.',
+          };
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+      }
+    } catch (e) {
+      console.warn('No se pudo descargar el CSV, intentando fallback.', e);
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(csv);
+        return {
+          method: 'clipboard',
+          success: true,
+          message: 'No fue posible descargar el archivo; el CSV se copio al portapapeles.',
+        };
+      } catch (e) {
+        console.warn('No se pudo copiar el CSV al portapapeles.', e);
+      }
+    }
+
+    return {
+      method: 'inline',
+      success: false,
+      message: 'No fue posible exportar automaticamente. Copia el contenido manualmente desde el historial.',
+    };
   }
 
   private saveToStorage() {
@@ -144,7 +203,8 @@ export class FeedbackLogService {
         if (Array.isArray(parsed)) {
           this.logs = parsed
             .map((entry: any) => this.normalizeLoadedEntry(entry))
-            .filter((entry: LogEntry | null): entry is LogEntry => entry !== null);
+            .filter((entry: LogEntry | null): entry is LogEntry => entry !== null)
+            .slice(0, this.maxEntries);
           this.logs.forEach((entry) => {
             const key = entry.eventKey || this.fallbackEventKey(entry.frequency);
             const ts = entry.lastTimestamp ?? entry.timestamp;
@@ -187,6 +247,8 @@ export class FeedbackLogService {
       magnitudeDb: Math.round(mergedMagnitudeDb * 10) / 10,
       duration: mergedDuration,
       timestamp: now,
+      isoTimestamp: date.toISOString(),
+      timezoneOffsetMinutes: -date.getTimezoneOffset(),
       lastTimestamp: now,
       occurrences: nextCount,
       date: date.toLocaleDateString(),
@@ -210,8 +272,12 @@ export class FeedbackLogService {
     const lastTimestamp = Number(entry.lastTimestamp ?? entry.timestamp);
     const duration = Number(entry.duration);
     const occurrences = Number(entry.occurrences ?? 1);
+    const timezoneOffsetMinutes = Number(entry.timezoneOffsetMinutes ?? 0);
 
     if (!Number.isFinite(frequency) || !Number.isFinite(magnitudeDb) || !Number.isFinite(timestamp)) {
+      return null;
+    }
+    if (!this.isValidFrequency(frequency)) {
       return null;
     }
 
@@ -223,6 +289,12 @@ export class FeedbackLogService {
       frequency: Math.round(frequency),
       magnitudeDb: Math.round(magnitudeDb * 10) / 10,
       timestamp,
+      isoTimestamp: typeof entry.isoTimestamp === 'string' && entry.isoTimestamp
+        ? entry.isoTimestamp
+        : new Date(timestamp).toISOString(),
+      timezoneOffsetMinutes: Number.isFinite(timezoneOffsetMinutes)
+        ? Math.round(timezoneOffsetMinutes)
+        : -dateObj.getTimezoneOffset(),
       lastTimestamp: Number.isFinite(lastTimestamp) ? lastTimestamp : timestamp,
       duration: Number.isFinite(duration) ? Math.max(0, Math.round(duration)) : 0,
       occurrences: Number.isFinite(occurrences) ? Math.max(1, Math.round(occurrences)) : 1,
@@ -233,5 +305,9 @@ export class FeedbackLogService {
 
   private fallbackEventKey(frequency: number): string {
     return feedbackEventKeyFromFrequency(frequency);
+  }
+
+  private isValidFrequency(frequency: number): boolean {
+    return Number.isFinite(frequency) && frequency >= 20 && frequency <= 22_000;
   }
 }

@@ -1,12 +1,12 @@
 <div class="feedback-alerts">
   <div *ngIf="primaryEvent as event" class="alert alert-danger" [class.is-stale]="warningStale">
-    <div class="alert-icon">⚠️</div>
+    <ion-icon name="warning-outline" class="alert-icon"></ion-icon>
     <div class="alert-content">
       <strong>Feedback detectado</strong>
-      <div class="freq-display">{{ formatFreq(event.frequency) }}</div>
-      <div class="magnitude">
+      <div class="freq-display mono">{{ formatFreq(event.frequency) }}</div>
+      <div class="magnitude mono">
         {{ event.magnitudeDb.toFixed(1) }} dB
-        <span *ngIf="event.overThresholdDb !== null"> · +{{ formatPositiveDb(event.overThresholdDb) }} sobre umbral</span>
+        <span *ngIf="event.overThresholdDb !== null"> &middot; +{{ formatPositiveDb(event.overThresholdDb) }} sobre umbral</span>
       </div>
       <div *ngIf="extraActiveCount > 0" class="secondary-info">
         +{{ extraActiveCount }} feedback{{ extraActiveCount > 1 ? 's' : '' }} adicional{{ extraActiveCount > 1 ? 'es' : '' }}
@@ -18,15 +18,17 @@
        class="alert alert-suggestion"
        [class.severity-high]="currentSuggestion.severity === 'high'"
        [class.severity-medium]="currentSuggestion.severity === 'medium'">
-    <div class="alert-icon">💡</div>
+    <ion-icon name="bulb-outline" class="alert-icon"></ion-icon>
     <div class="alert-content">
       <strong>Sugerencia</strong>
-      <div class="live-metrics">
-        {{ formatFreq(currentSuggestion.frequency) }} · {{ currentSuggestion.magnitudeDb.toFixed(1) }} dB
-        <span *ngIf="currentSuggestion.overThresholdDb !== null"> · +{{ formatPositiveDb(currentSuggestion.overThresholdDb) }} sobre umbral</span>
+      <div class="live-metrics mono">
+        {{ formatFreq(currentSuggestion.frequency) }} &middot; {{ currentSuggestion.magnitudeDb.toFixed(1) }} dB
+        <span *ngIf="currentSuggestion.overThresholdDb !== null"> &middot; +{{ formatPositiveDb(currentSuggestion.overThresholdDb) }} sobre umbral</span>
       </div>
       <p>{{ currentSuggestion.message }}</p>
     </div>
-    <button class="dismiss-btn" (click)="dismiss()">✕</button>
+    <ion-button fill="clear" color="medium" size="small" (click)="dismiss()" class="dismiss-btn">
+      <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+    </ion-button>
   </div>
 </div>

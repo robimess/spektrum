@@ -76,6 +76,7 @@ describe('ConfigStorageService', () => {
     });
 
     it('should handle corrupted localStorage data', () => {
+      const errorSpy = spyOn(console, 'error');
       localStorage.setItem('spektrum_config', 'invalid json {]');
       
       TestBed.resetTestingModule();
@@ -85,6 +86,7 @@ describe('ConfigStorageService', () => {
       
       expect(config).toBeTruthy();
       expect(config.userRole).toBe(UserRole.FOH);
+      expect(errorSpy).toHaveBeenCalled();
     });
 
     it('should handle migration from old version', () => {
@@ -204,6 +206,7 @@ describe('ConfigStorageService', () => {
       
       service.config$.subscribe(config => {
         if (config.fftSize === 8192) {
+          expect(config.userRole).toBe(UserRole.FOH);
           done();
         }
       });
@@ -256,9 +259,11 @@ describe('ConfigStorageService', () => {
     });
 
     it('should reject invalid JSON', () => {
+      const errorSpy = spyOn(console, 'error');
       const result = service.importConfig('invalid json {]');
       
       expect(result).toBe(false);
+      expect(errorSpy).toHaveBeenCalled();
     });
 
     it('should reject invalid config structure', () => {
@@ -278,6 +283,7 @@ describe('ConfigStorageService', () => {
       
       service.config$.subscribe(config => {
         if (config.fftSize === 4096) {
+          expect(config.userRole).toBe(UserRole.MONITORS);
           done();
         }
       });

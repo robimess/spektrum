@@ -1,6 +1,8 @@
-export type UserRole = 'foh' | 'monitors' | 'broadcast' | 'other';
+export type UserRole = 'foh' | 'monitors' | 'broadcast' | 'recording';
 export type ResolutionType = 'octava' | 'media' | 'tercio';
 export type PaletteType = 'viridis' | 'magma' | 'inferno' | 'plasma' | 'gray';
+export type InputMode = 'microphone' | 'demo';
+export type InputModeSource = 'system' | 'user';
 
 export interface UserConfig {
   theme: 'dark' | 'light';
@@ -22,6 +24,8 @@ export interface UserConfig {
   
   aiEnabled: boolean;
   userRole: UserRole;
+  inputMode: InputMode;
+  inputModeSource: InputModeSource;
   
   preferredMicId?: string;
 }
@@ -46,4 +50,6 @@ export const DEFAULT_USER_CONFIG: UserConfig = {
   
   aiEnabled: true,
   userRole: 'foh',
+  inputMode: 'microphone',
+  inputModeSource: 'system',
 };

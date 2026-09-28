@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { DEFAULT_AUDIO_CAPTURE_PREFERENCES } from './audio-capture.util';
 
 export interface AudioContextConfig {
   sampleRate?: number;
@@ -10,16 +11,24 @@ export class AudioContextService {
   private context: AudioContext | null = null;
   private analyserNode: AnalyserNode | null = null;
   private workletNode: AudioWorkletNode | null = null;
+  private readonly captureDefaults = DEFAULT_AUDIO_CAPTURE_PREFERENCES;
 
   async initialize(config: AudioContextConfig = {}): Promise<AudioContext> {
     if (this.context && this.context.state !== 'closed') {
       return this.context;
     }
 
-    this.context = new AudioContext({
-      sampleRate: config.sampleRate || 48000,
-      latencyHint: config.latencyHint || 'interactive',
-    });
+    const preferredSampleRate = config.sampleRate || this.captureDefaults.sampleRate;
+    const latencyHint = config.latencyHint || this.captureDefaults.latencyHint;
+
+    try {
+      this.context = new AudioContext({
+        sampleRate: preferredSampleRate,
+        latencyHint,
+      });
+    } catch {
+      this.context = new AudioContext({ latencyHint });
+    }
 
     if (this.context.state === 'suspended') {
       await this.context.resume();

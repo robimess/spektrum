@@ -1,0 +1,30 @@
+.DS_Store
+
+# Node / Angular / Ionic
+node_modules/
+app/node_modules/
+app/.angular/
+app/.ion/
+app/www/
+app/coverage/
+coverage/
+
+# Python / local analysis
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Rust / WASM build outputs
+bindings_wasm/target/
+
+# Analysis artifacts
+estructura.txt
+app/src_tree.txt
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+*.swo

@@ -1,113 +1,68 @@
-# 🎧 SPEKTRUM
+# SPEKTRUM
 
-> Análisis espectral y detección de feedback en tiempo real desde dispositivos móviles.  
-> Diseñado para técnicos e ingenieros de sonido que trabajan en vivo, sin necesidad de micrófonos de medición.
+Análisis espectral y detección de feedback en tiempo real para uso en vivo, con foco en operación rápida desde un dispositivo móvil o navegador moderno.
 
----
+## Estado actual
 
-## 📌 Descripción
+La rama actual consolida el trabajo útil de las ramas disponibles del repositorio:
 
-**SPEKTRUM** es una aplicación multiplataforma (Android/iOS) que permite analizar en tiempo real la respuesta espectral de un recinto utilizando solo el micrófono del dispositivo. Detecta automáticamente frecuencias críticas asociadas a feedback, visualiza la energía espectral por bandas, y registra los eventos problemáticos para tomar decisiones técnicas rápidas y bien informadas.
+- visualización en espectrograma y barras por octava, 1/2 y 1/3 de octava
+- HOLD configurable y selector de micrófono
+- modo `demo` interno cuando no hay captura disponible o el usuario quiere probar la app sin hardware
+- detección de feedback con sensibilidad, duración mínima y rango de frecuencias configurables
+- alertas en vivo y log persistente con exportación CSV
+- exportación PNG del análisis visible
+- sugerencias contextuales por rol (`FOH`, `Monitores`, `Broadcast`, `Recording`)
+- calibración por dispositivo o global mediante curvas JSON o CSV
+- diagnósticos de entrada: sin señal, nivel bajo, clipping, latencia alta y desconexión de dispositivo
+- tema oscuro/claro y configuración persistente
+- suite local de calidad con `lint`, `build` y `176` tests
 
----
+## Arquitectura
 
-## 🚀 Funcionalidades principales (MVP)
+- `app/`: aplicación Ionic Angular y servicios de análisis en tiempo real
+- `bindings_wasm/`: código Rust/WASM para procesamiento complementario
+- `docs/`: backlog consolidado, estado MVP y documentación de arquitectura
 
-- Análisis de espectro en tiempo real con bandas de 1/3, 1/2 y 1 octava.
-- Visualización logarítmica en dB con HOLD configurable.
-- Detección automática de feedback por picos sostenidos.
-- Alertas visuales con frecuencia, intensidad y duración.
-- Registro de eventos críticos con exportación CSV.
-- Panel de configuración rápida sin interrumpir análisis.
-- UI optimizada para uso en vivo (modo nocturno, botones grandes).
-- Compatible con micrófonos internos y externos.
+La descripción técnica resumida está en [architecture.md](/Users/maximogatica/spektrum/spektrum/docs/architecture.md) y el detalle modular en [ARQUITECTURA_CORE.md](/Users/maximogatica/spektrum/spektrum/docs/ARQUITECTURA_CORE.md).
 
----
+## Desarrollo local
 
-## 🧱 Arquitectura general
+Requisitos recomendados:
 
-- ⚙️ **Motor DSP** en Rust (`rustfft`) — análisis espectral en tiempo real.
-- 📱 **Frontend** en Ionic Angular — visualización y configuración.
-- 🔌 **Capacitor Plugin** — acceso nativo a micrófono y hardware.
-- 📁 **Logging local** y exportación.
-- 🧠 (Opcional) Módulo IA básica con lógica de recomendaciones simples.
+- Node.js 20 o 22 LTS
+- npm
+- `nvm use` en la raíz del repo para tomar la versión definida en [`.nvmrc`](/Users/maximogatica/spektrum/spektrum/.nvmrc)
 
-Consulta [`architecture.md`](./docs/architecture.md) para más detalle.
-
----
-
-## 📂 Estructura del repositorio
-
-```
-spektrum/
-├── dsp/                   # Núcleo DSP en Rust
-├── app/                   # Aplicación móvil en Ionic Angular
-│   ├── pages/
-│   ├── components/
-│   └── services/
-├── capacitor-plugin/      # Plugin nativo de micrófono
-├── wasm/                  # Versión opcional WebAssembly del DSP
-├── docs/
-│   ├── USER_STORIES.md
-│   ├── tasks.md
-│   ├── architecture.md
-│   └── MVP_FEATURES.md
-```
-
----
-
-## 🔧 Instalación (modo desarrollo)
-
-### Requisitos
-- Node.js 20+
-- Rust 1.76+
-- Ionic CLI (`npm install -g @ionic/cli`)
-- Android Studio (para Android build)
-- Visual Studio Code (opcional)
-
-### Pasos
+Comandos principales:
 
 ```bash
-# 1. Clonar repositorio
-git clone https://github.com/usuario/spektrum.git
-cd spektrum
-
-# 2. Instalar dependencias frontend
 cd app
 npm install
-
-# 3. Construir proyecto Ionic + Capacitor
-ionic build
-npx cap sync
-
-# 4. Ejecutar app en dispositivo
-npx cap run android
+npm run lint
+npm run build
+npm test -- --watch=false --browsers=ChromeHeadless
 ```
 
----
+Para ejecutar la app en desarrollo:
 
-## 📈 Roadmap
+```bash
+cd app
+npm start
+```
 
-Consulta [`MVP_FEATURES.md`](./docs/MVP_FEATURES.md) para ver el conjunto actual de funcionalidades.  
-La hoja de ruta incluye:
+## Documentación
 
-- 🧠 IA personalizada por usuario (basada en logs)
-- ☁️ Exportación en la nube (Google Drive, Dropbox)
-- 📊 Análisis extendido (FFT lineal + media móvil)
-- 🧪 Testing E2E + automatización de QA
+- [MVP_FEATURES.md](/Users/maximogatica/spektrum/spektrum/docs/MVP_FEATURES.md)
+- [USER_STORIES.md](/Users/maximogatica/spektrum/spektrum/docs/USER_STORIES.md)
+- [tasks.md](/Users/maximogatica/spektrum/spektrum/docs/tasks.md)
+- [architecture.md](/Users/maximogatica/spektrum/spektrum/docs/architecture.md)
 
----
+## Pendiente relevante
 
-## 👨‍💻 Colaboradores
+El proyecto quedó consistente para seguir iterando, pero aún no cubre:
 
-- **Máximo Gatica Ortega** – [GitHub](https://github.com/robimess)  
-- Aporte, idea original, diseño UX e implementación DSP.
-
----
-
-## 📄 Licencia
-
-Este proyecto es de código cerrado en etapa de desarrollo MVP.  
-Licencia y modelo de negocio a definir tras la fase de validación técnica.
-
----"# spektrum" 
+- login/sesión persistente en la nube
+- exportación cloud
+- validación manual en dispositivos móviles reales
+- pipeline de release/CI y fijación de entorno en Node LTS

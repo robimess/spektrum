@@ -14,16 +14,19 @@ export class SignalSmoothingService {
     config: SmoothingConfig
   ): void {
     const len = Math.min(current.length, target.length);
+    if (len === 0) {
+      return;
+    }
+    const attackCoef = this.calculateCoefficient(deltaMs, config.attackMs);
+    const releaseCoef = this.calculateCoefficient(deltaMs, config.releaseMs);
     
     for (let i = 0; i < len; i++) {
       const curr = current[i];
       const targ = target[i];
       
       if (targ > curr) {
-        const attackCoef = this.calculateCoefficient(deltaMs, config.attackMs);
         current[i] = curr + (targ - curr) * attackCoef;
       } else {
-        const releaseCoef = this.calculateCoefficient(deltaMs, config.releaseMs);
         current[i] = curr + (targ - curr) * releaseCoef;
       }
     }

@@ -1,5 +1,8 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IonIcon, IonButton } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { warningOutline, bulbOutline, closeOutline } from 'ionicons/icons';
 import { Subscription } from 'rxjs';
 import { FeedbackDetectorService } from '../../services/feedback-detector.service';
 import { FeedbackLogService } from '../../services/feedback-log.service';
@@ -9,7 +12,7 @@ import { FeedbackEvent, feedbackEventKeyFromFrequency } from '../../models/feedb
 @Component({
   selector: 'app-feedback-alert',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, IonIcon, IonButton],
   templateUrl: './feedback-alert.component.html',
   styleUrls: ['./feedback-alert.component.scss'],
 })
@@ -27,12 +30,16 @@ export class FeedbackAlertComponent implements OnInit, OnDestroy {
   
   private subs = new Subscription();
   private loggedEvents = new Set<string>();
+
+  constructor() {
+    addIcons({ warningOutline, bulbOutline, closeOutline });
+  }
   private lastSuggestionAt = 0;
   private lastSuggestedEventKey: string | null = null;
   private lastSuggestedFreq = 0;
   private lastSuggestedDb = -Infinity;
   private dismissedSuggestionForEventKey: string | null = null;
-  private readonly suggestionRefreshMs = 300;
+  private readonly suggestionRefreshMs = 10_000;
   private lastPrimarySeenAt = 0;
   private warningVisibleSince = 0;
   private pendingPrimaryEvent: FeedbackEvent | null = null;
@@ -44,6 +51,7 @@ export class FeedbackAlertComponent implements OnInit, OnDestroy {
   private readonly primaryLockHz = 45;
   private readonly hardEventFreqDeltaHz = 35;
   private readonly minLogDurationMs = 300;
+  private readonly maxLoggedEventsSize = 500;
 
   ngOnInit() {
     this.subs.add(
@@ -97,6 +105,14 @@ export class FeedbackAlertComponent implements OnInit, OnDestroy {
             this.loggedEvents.add(e.id);
           });
 
+        if (this.loggedEvents.size > this.maxLoggedEventsSize) {
+          const activeIds = new Set(this.activeEvents.map(e => e.id));
+          for (const id of this.loggedEvents) {
+            if (!activeIds.has(id)) this.loggedEvents.delete(id);
+            if (this.loggedEvents.size <= this.maxLoggedEventsSize / 2) break;
+          }
+        }
+
         if (!this.primaryEvent) {
           this.currentSuggestion = null;
           this.lastSuggestedEventKey = null;
@@ -143,6 +159,7 @@ export class FeedbackAlertComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.loggedEvents.clear();
     this.subs.unsubscribe();
   }
 

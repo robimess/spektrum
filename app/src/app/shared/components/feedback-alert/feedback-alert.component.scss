@@ -13,7 +13,7 @@
 
   .alert {
     pointer-events: auto;
-    background: rgba(0, 0, 0, 0.95);
+    background: var(--sp-panel, #141A1E);
     border-radius: 12px;
     padding: 16px;
     display: flex;
@@ -24,12 +24,12 @@
     border-left: 4px solid;
 
     &.alert-danger {
-      border-color: #ff3b30;
+      border-color: var(--sp-danger, #FF4D4D);
       
       .freq-display {
-        font-size: 24px;
+        font-size: 28px;
         font-weight: bold;
-        color: #ff3b30;
+        color: var(--sp-danger, #FF4D4D);
       }
 
       &.is-stale {
@@ -39,27 +39,28 @@
     }
 
     &.alert-suggestion {
-      border-color: #4cd964;
+      border-color: var(--sp-accent, #3DDC97);
 
       &.severity-high {
-        border-color: #ff9500;
+        border-color: var(--sp-danger, #FF4D4D);
       }
 
       &.severity-medium {
-        border-color: #ffcc00;
+        border-color: var(--sp-warn, #FFB020);
       }
 
       p {
         margin: 8px 0 0 0;
         font-size: 13px;
         line-height: 1.4;
-        color: #ccc;
+        color: var(--sp-muted, #8A9AA3);
       }
     }
 
     .alert-icon {
-      font-size: 28px;
+      font-size: 24px;
       flex-shrink: 0;
+      color: var(--sp-muted, #8A9AA3);
     }
 
     .alert-content {
@@ -69,49 +70,40 @@
       strong {
         display: block;
         font-size: 14px;
-        color: #fff;
+        color: var(--sp-text, #E8EEF2);
         margin-bottom: 4px;
       }
 
       .magnitude {
         font-size: 12px;
-        color: #999;
+        color: var(--sp-muted, #8A9AA3);
         margin-top: 4px;
       }
 
       .secondary-info {
         margin-top: 6px;
         font-size: 12px;
-        color: #b8b8b8;
+        color: var(--sp-muted, #8A9AA3);
       }
 
       .live-metrics {
         margin-top: 4px;
         font-size: 12px;
-        color: #d6d6d6;
+        color: var(--sp-muted, #8A9AA3);
       }
     }
 
     .dismiss-btn {
-      background: transparent;
-      border: none;
-      color: #999;
-      font-size: 20px;
-      cursor: pointer;
-      padding: 0;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      --padding-start: 4px;
+      --padding-end: 4px;
       flex-shrink: 0;
-      transition: color 0.2s;
-
-      &:hover {
-        color: #fff;
-      }
     }
   }
+}
+
+.mono {
+  font-family: var(--sp-font-mono, 'JetBrains Mono', 'Cascadia Code', Consolas, monospace);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 640px) {
@@ -132,5 +124,11 @@
   to {
     transform: translateX(0);
     opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback-alerts .alert {
+    animation: none;
   }
 }

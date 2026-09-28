@@ -1,2 +1,45 @@
-// For information on how to create your own theme, please see:
-// http://ionicframework.com/docs/theming/
+// SPEKTRUM — tokens de instrumento (stage-dark)
+:root {
+  --sp-bg: #0B0E10;
+  --sp-panel: #141A1E;
+  --sp-line: #243038;
+  --sp-text: #E8EEF2;
+  --sp-muted: #8A9AA3;
+  --sp-accent: #3DDC97;
+  --sp-warn: #FFB020;
+  --sp-danger: #FF4D4D;
+
+  --sp-font-ui: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --sp-font-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  --sp-radius: 10px;
+  --sp-tap: 44px;
+
+  /* Ionic overrides */
+  --ion-color-primary: #3DDC97;
+  --ion-color-primary-contrast: #0B0E10;
+  --ion-color-danger: #FF4D4D;
+  --ion-color-warning: #FFB020;
+  --ion-background-color: var(--sp-bg);
+  --ion-text-color: var(--sp-text);
+  --ion-toolbar-background: var(--sp-panel);
+  --ion-item-background: var(--sp-panel);
+  --ion-border-color: var(--sp-line);
+  --ion-font-family: var(--sp-font-ui);
+
+  --ion-color-primary-rgb: 61, 220, 151;
+  --ion-color-danger-rgb: 255, 77, 77;
+  --ion-color-warning-rgb: 255, 176, 32;
+}
+
+.mono,
+.freq-display,
+.db,
+.q {
+  font-family: var(--sp-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--sp-accent);
+  outline-offset: 2px;
+}

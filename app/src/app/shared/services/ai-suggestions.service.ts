@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { UserRole } from '../models/user-config.model';
 import { FeedbackEvent } from '../models/feedback-event.model';
 
@@ -16,8 +16,8 @@ export interface Suggestion {
 
 @Injectable({ providedIn: 'root' })
 export class AiSuggestionsService {
-  private suggestionsSubject = new Subject<Suggestion>();
-  public suggestions$: Observable<Suggestion> = this.suggestionsSubject.asObservable();
+  private suggestionsSubject = new BehaviorSubject<Suggestion | null>(null);
+  public suggestions$: Observable<Suggestion | null> = this.suggestionsSubject.asObservable();
 
   private enabled = true;
   private userRole: UserRole = 'foh';
@@ -28,6 +28,10 @@ export class AiSuggestionsService {
 
   setUserRole(role: UserRole) {
     this.userRole = role;
+  }
+
+  clearSuggestions() {
+    this.suggestionsSubject.next(null);
   }
 
   generateSuggestion(events: FeedbackEvent[]) {
@@ -75,6 +79,9 @@ export class AiSuggestionsService {
       
       case 'broadcast':
         return `Broadcast → Feedback en ${freqStr} (${magStr}${excessStr}). Ajuste ganancia y filtre en la cadena de transmisión.`;
+
+      case 'recording':
+        return `Recording → Feedback en ${freqStr} (${magStr}${excessStr}). Marque el take y corrija con notch o reposicionando el micrófono antes de continuar.`;
       
       default:
         return `Feedback detectado en ${freqStr} (${magStr}${excessStr}). Reduce ganancia o aplica notch en esa frecuencia.`;
