@@ -13,16 +13,16 @@
   min-height: 100%;
   color: var(--sp-text);
   background:
-    radial-gradient(circle at top left, rgba(61, 220, 151, 0.08), transparent 28%),
-    radial-gradient(circle at top right, rgba(255, 176, 32, 0.08), transparent 24%),
+    radial-gradient(ellipse at 20% 0%, rgba(0, 229, 160, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 0%, rgba(77, 166, 255, 0.04) 0%, transparent 50%),
     var(--sp-bg);
 
   &.is-light {
-    color: #172033;
+    color: #1a2030;
     background:
-      radial-gradient(circle at top left, rgba(45, 212, 191, 0.12), transparent 28%),
-      radial-gradient(circle at top right, rgba(251, 146, 60, 0.12), transparent 24%),
-      #f8fafc;
+      radial-gradient(ellipse at 20% 0%, rgba(0, 200, 140, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 0%, rgba(77, 166, 255, 0.06) 0%, transparent 50%),
+      #f0f2f5;
   }
 }
 
@@ -42,37 +42,39 @@
     pointer-events: auto;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    border-radius: 12px;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: var(--sp-radius-md);
     font-size: 12px;
     line-height: 1.4;
-    backdrop-filter: blur(12px);
-    animation: slideDown 0.25s ease-out;
+    backdrop-filter: var(--sp-glass-blur);
+    -webkit-backdrop-filter: var(--sp-glass-blur);
+    animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid;
 
     ion-icon {
       flex-shrink: 0;
-      font-size: 16px;
+      font-size: 18px;
     }
 
     &.is-info {
-      background: rgba(59, 130, 246, 0.15);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      color: #93c5fd;
-      ion-icon { color: #60a5fa; }
+      background: rgba(77, 166, 255, 0.12);
+      border-color: rgba(77, 166, 255, 0.25);
+      color: #8CC4FF;
+      ion-icon { color: var(--sp-info); }
     }
 
     &.is-warn {
-      background: rgba(255, 176, 32, 0.15);
-      border: 1px solid rgba(255, 176, 32, 0.3);
-      color: #fcd34d;
+      background: rgba(255, 176, 32, 0.12);
+      border-color: rgba(255, 176, 32, 0.25);
+      color: #FFD080;
       ion-icon { color: var(--sp-warn); }
     }
 
     &.is-danger {
-      background: rgba(255, 77, 77, 0.18);
-      border: 1px solid rgba(255, 77, 77, 0.35);
-      color: #fca5a5;
+      background: rgba(255, 64, 96, 0.12);
+      border-color: rgba(255, 64, 96, 0.3);
+      color: #FF8FA0;
       ion-icon { color: var(--sp-danger); }
     }
   }
@@ -82,17 +84,21 @@
 .canvas-stage {
   flex: 1;
   display: flex;
-  padding: 8px 12px 4px;
+  padding: 10px 12px 6px;
   min-height: 0;
 }
 
 .analysis-frame {
   position: relative;
   flex: 1;
-  border-radius: 20px;
+  border-radius: var(--sp-radius-lg);
   overflow: hidden;
-  background: #020617;
+  background: #06080A;
   border: 1px solid var(--sp-line);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   min-height: 200px;
 }
 
@@ -105,7 +111,7 @@
 
 .analysis-surface--spectrogram {
   display: block;
-  transition: opacity 180ms ease;
+  transition: opacity 200ms ease;
 
   &.is-hidden {
     display: none;
@@ -120,9 +126,9 @@ app-bars-view.analysis-surface--bars {
 
 .analysis-overlay {
   position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -132,16 +138,19 @@ app-bars-view.analysis-surface--bars {
 .overlay-pill {
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
+  min-height: 22px;
   padding: 0 8px;
-  border-radius: 999px;
-  background: rgba(2, 6, 23, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
+  border-radius: var(--sp-radius-sm);
+  background: rgba(6, 8, 10, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--sp-font-mono);
   font-size: 10px;
-  letter-spacing: 0.06em;
+  font-weight: 500;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .mono {
@@ -156,15 +165,17 @@ app-bars-view.analysis-surface--bars {
   z-index: 5;
 }
 
-// Bottom toolbar
+// Bottom toolbar — glassmorphism
 .bottom-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: 8px 12px;
-  background: var(--sp-panel);
-  border-top: 1px solid var(--sp-line);
+  background: var(--sp-glass-bg);
+  border-top: 1px solid var(--sp-glass-border);
+  backdrop-filter: var(--sp-glass-blur);
+  -webkit-backdrop-filter: var(--sp-glass-blur);
   min-height: 52px;
 }
 
@@ -184,18 +195,20 @@ app-bars-view.analysis-surface--bars {
 }
 
 .toolbar-segment {
-  --background: rgba(255, 255, 255, 0.06);
-  max-width: 180px;
+  --background: rgba(255, 255, 255, 0.04);
+  max-width: 200px;
   min-height: 36px;
 
   ion-segment-button {
     --indicator-color: var(--sp-accent);
-    --color: var(--sp-muted);
+    --color: var(--sp-text-dim);
     --color-checked: var(--sp-bg);
     --padding-top: 4px;
     --padding-bottom: 4px;
     min-height: 36px;
     font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
   }
 }
 
@@ -204,9 +217,11 @@ app-bars-view.analysis-surface--bars {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 12px 4px 16px;
-  background: var(--sp-panel);
-  border-top: 1px solid var(--sp-line);
+  padding: 6px 12px;
+  background: var(--sp-glass-bg);
+  border-top: 1px solid var(--sp-glass-border);
+  backdrop-filter: var(--sp-glass-blur);
+  -webkit-backdrop-filter: var(--sp-glass-blur);
   min-height: 44px;
 }
 
@@ -216,23 +231,23 @@ app-bars-view.analysis-surface--bars {
   align-items: center;
   gap: 8px;
   padding: 4px 12px 8px;
-  background: var(--sp-panel);
+  background: var(--sp-glass-bg);
 }
 
 .export-msg {
   margin: 0;
   font-size: 11px;
-  color: var(--sp-muted);
+  color: var(--sp-text-dim);
 }
 
 // Responsive
 @media (max-width: 640px) {
   .canvas-stage {
-    padding: 6px 8px 2px;
+    padding: 6px 8px 4px;
   }
 
   .analysis-frame {
-    border-radius: 16px;
+    border-radius: var(--sp-radius-md);
     min-height: 180px;
   }
 
@@ -250,7 +265,7 @@ app-bars-view.analysis-surface--bars {
   }
 
   .toolbar-segment {
-    max-width: 120px;
+    max-width: 140px;
   }
 
   .mic-strip {
@@ -260,7 +275,7 @@ app-bars-view.analysis-surface--bars {
 
 @keyframes slideDown {
   from {
-    transform: translateY(-20px);
+    transform: translateY(-16px);
     opacity: 0;
   }
   to {

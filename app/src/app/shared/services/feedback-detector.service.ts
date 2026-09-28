@@ -287,7 +287,6 @@ export class FeedbackDetectorService {
   }
 
   private pruneKeyCooldowns(now: number): void {
-    if (this.keyCooldownUntil.size < 512) return;
     for (const [key, until] of this.keyCooldownUntil.entries()) {
       if (until < now) {
         this.keyCooldownUntil.delete(key);
@@ -304,7 +303,6 @@ export class FeedbackDetectorService {
   }
 
   private pruneSustainStates(now: number): void {
-    if (this.sustainStates.size < 256) return;
     for (const [bin, state] of this.sustainStates.entries()) {
       if ((now - state.lastTs) > this.config.sustainMaxGapMs) {
         this.sustainStates.delete(bin);

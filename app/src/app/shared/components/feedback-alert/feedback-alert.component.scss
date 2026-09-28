@@ -1,66 +1,75 @@
 .feedback-alerts {
   position: fixed;
-  top: 80px;
+  top: 64px;
   right: 16px;
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  width: min(380px, calc(100vw - 24px));
-  max-height: calc(100vh - 96px);
+  gap: 10px;
+  width: min(360px, calc(100vw - 32px));
+  max-height: calc(100vh - 80px);
   overflow-y: auto;
   pointer-events: none;
 
   .alert {
     pointer-events: auto;
-    background: var(--sp-panel, #141A1E);
-    border-radius: 12px;
-    padding: 16px;
+    background: var(--sp-glass-bg, rgba(16, 22, 28, 0.92));
+    border-radius: var(--sp-radius-md, 10px);
+    padding: 14px 16px;
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    animation: slideIn 0.3s ease-out;
-    border-left: 4px solid;
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    animation: alertSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid;
+    box-shadow:
+      0 4px 16px rgba(0, 0, 0, 0.3),
+      0 1px 3px rgba(0, 0, 0, 0.2);
 
     &.alert-danger {
-      border-color: var(--sp-danger, #FF4D4D);
-      
+      border-color: rgba(255, 64, 96, 0.4);
+      box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(255, 64, 96, 0.1);
+
       .freq-display {
-        font-size: 28px;
-        font-weight: bold;
-        color: var(--sp-danger, #FF4D4D);
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--sp-danger, #FF4060);
+        font-family: var(--sp-font-mono, 'JetBrains Mono', monospace);
+        letter-spacing: -0.02em;
       }
 
       &.is-stale {
-        opacity: 0.7;
-        transition: opacity 180ms ease;
+        opacity: 0.65;
+        transition: opacity 200ms ease;
       }
     }
 
     &.alert-suggestion {
-      border-color: var(--sp-accent, #3DDC97);
+      border-color: rgba(0, 229, 160, 0.3);
 
       &.severity-high {
-        border-color: var(--sp-danger, #FF4D4D);
+        border-color: rgba(255, 64, 96, 0.4);
       }
 
       &.severity-medium {
-        border-color: var(--sp-warn, #FFB020);
+        border-color: rgba(255, 176, 32, 0.4);
       }
 
       p {
-        margin: 8px 0 0 0;
-        font-size: 13px;
-        line-height: 1.4;
-        color: var(--sp-muted, #8A9AA3);
+        margin: 6px 0 0 0;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--sp-text-secondary, #8899AA);
       }
     }
 
     .alert-icon {
-      font-size: 24px;
+      font-size: 20px;
       flex-shrink: 0;
-      color: var(--sp-muted, #8A9AA3);
+      color: var(--sp-danger, #FF4060);
     }
 
     .alert-content {
@@ -69,27 +78,32 @@
 
       strong {
         display: block;
-        font-size: 14px;
-        color: var(--sp-text, #E8EEF2);
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--sp-text-secondary, #8899AA);
         margin-bottom: 4px;
       }
 
       .magnitude {
         font-size: 12px;
-        color: var(--sp-muted, #8A9AA3);
+        color: var(--sp-text-secondary, #8899AA);
         margin-top: 4px;
+        font-family: var(--sp-font-mono, monospace);
       }
 
       .secondary-info {
         margin-top: 6px;
-        font-size: 12px;
-        color: var(--sp-muted, #8A9AA3);
+        font-size: 11px;
+        color: var(--sp-text-dim, #556677);
       }
 
       .live-metrics {
         margin-top: 4px;
-        font-size: 12px;
-        color: var(--sp-muted, #8A9AA3);
+        font-size: 11px;
+        color: var(--sp-text-secondary, #8899AA);
+        font-family: var(--sp-font-mono, monospace);
       }
     }
 
@@ -97,6 +111,12 @@
       --padding-start: 4px;
       --padding-end: 4px;
       flex-shrink: 0;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+
+      &:hover {
+        opacity: 1;
+      }
     }
   }
 }
@@ -108,17 +128,17 @@
 
 @media (max-width: 640px) {
   .feedback-alerts {
-    top: 72px;
-    right: 12px;
-    left: 12px;
+    top: 56px;
+    right: 8px;
+    left: 8px;
     width: auto;
-    max-height: 45vh;
+    max-height: 40vh;
   }
 }
 
-@keyframes slideIn {
+@keyframes alertSlideIn {
   from {
-    transform: translateX(400px);
+    transform: translateX(100px);
     opacity: 0;
   }
   to {

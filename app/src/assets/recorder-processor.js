@@ -1,13 +1,16 @@
 class SpektrumRecorder extends AudioWorkletProcessor {
   constructor() {
     super();
-    // DC offset removal: first-order high-pass IIR filter
-    // Cutoff ~20 Hz at 48kHz sample rate (removes DC and subsonic rumble)
     this._prevInput = 0;
     this._prevOutput = 0;
-    // Coefficient: alpha = (1 - 2*pi*fc/fs) approximation for first-order HPF
-    // For fc=20Hz, fs=48000: alpha ≈ 0.9974
-    this._alpha = 0.9974;
+    // Compute HPF coefficient from actual sample rate
+    // alpha = 1 / (1 + 2*pi*fc/fs) for fc=20Hz
+    const fc = 20;
+    const fs = sampleRate; // AudioWorkletGlobalScope global
+    this._alpha = 1 / (1 + 2 * Math.PI * fc / fs);
+    // Pre-allocate output buffer (avoids GC pressure)
+    this._bufLen = 128; // standard quantum size
+    this._filtered = null; // lazy init on first process() with real length
   }
 
   process(inputs, outputs) {
@@ -18,15 +21,19 @@ class SpektrumRecorder extends AudioWorkletProcessor {
       const ch = input[0];
       const frames = ch.length;
 
-      // Apply high-pass filter to remove DC offset and subsonic noise
-      const filtered = new Float32Array(frames);
+      // Lazy-init or resize filtered buffer
+      if (!this._filtered || this._filtered.length !== frames) {
+        this._filtered = new Float32Array(frames);
+      }
+      const filtered = this._filtered;
+
+      // First-order HPF: y[n] = alpha * (y[n-1] + x[n] - x[n-1])
       const alpha = this._alpha;
       let prevIn = this._prevInput;
       let prevOut = this._prevOutput;
 
       for (let i = 0; i < frames; i++) {
         const x = ch[i];
-        // First-order HPF: y[n] = alpha * (y[n-1] + x[n] - x[n-1])
         const y = alpha * (prevOut + x - prevIn);
         filtered[i] = y;
         prevIn = x;
@@ -36,15 +43,15 @@ class SpektrumRecorder extends AudioWorkletProcessor {
       this._prevInput = prevIn;
       this._prevOutput = prevOut;
 
-      // Pass through filtered audio to output
+      // Pass through filtered audio
       const out = output && output[0];
       if (out) {
         const len = Math.min(out.length, frames);
         out.set(filtered.subarray(0, len));
       }
 
-      // Send filtered frame to main thread
-      this.port.postMessage(filtered);
+      // Send to main thread (transfers ownership of a copy)
+      this.port.postMessage(new Float32Array(filtered));
     }
 
     return true;

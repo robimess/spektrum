@@ -219,9 +219,9 @@ export class SpectrogramService {
 
       this.analyser.getFloatFrequencyData(this.fftDbArray);
       
-      // Noise gate: clamp bins below -90 dBFS to silence
-      // This prevents showing false energy in silent conditions
-      const noiseFloorDb = -90;
+      // Noise gate: clamp bins below -95 dBFS to silence
+      // Threshold set between AnalyserNode min (-110) and typical noise floor
+      const noiseFloorDb = -95;
       for (let i = 0; i < this.fftDbArray.length; i++) {
         const db = this.fftDbArray[i];
         if (db < noiseFloorDb) {

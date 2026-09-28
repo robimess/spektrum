@@ -1,45 +1,102 @@
-// SPEKTRUM — tokens de instrumento (stage-dark)
-:root {
-  --sp-bg: #0B0E10;
-  --sp-panel: #141A1E;
-  --sp-line: #243038;
-  --sp-text: #E8EEF2;
-  --sp-muted: #8A9AA3;
-  --sp-accent: #3DDC97;
-  --sp-warn: #FFB020;
-  --sp-danger: #FF4D4D;
+// SPEKTRUM — Futuristic audio instrument design system
+// Inspired by Ableton, FabFilter, professional RTA tools
 
-  --sp-font-ui: 'Inter', 'Segoe UI', system-ui, sans-serif;
-  --sp-font-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
-  --sp-radius: 10px;
+:root {
+  // Core palette
+  --sp-bg: #06080A;
+  --sp-bg-elevated: #0C1014;
+  --sp-panel: #10161C;
+  --sp-panel-hover: #161E26;
+  --sp-line: #1C2430;
+  --sp-line-bright: #2A3644;
+  --sp-text: #E4EAF0;
+  --sp-text-secondary: #8899AA;
+  --sp-text-dim: #556677;
+
+  // Accent colors (signal-green / warning-amber / danger-red)
+  --sp-accent: #00E5A0;
+  --sp-accent-dim: #00B87D;
+  --sp-accent-glow: rgba(0, 229, 160, 0.25);
+  --sp-warn: #FFB020;
+  --sp-warn-glow: rgba(255, 176, 32, 0.2);
+  --sp-danger: #FF4060;
+  --sp-danger-glow: rgba(255, 64, 96, 0.25);
+  --sp-info: #4DA6FF;
+
+  // Typography
+  --sp-font-ui: 'Inter', 'SF Pro Display', -apple-system, system-ui, sans-serif;
+  --sp-font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', Consolas, monospace;
+  --sp-font-display: 'Inter', system-ui, sans-serif;
+
+  // Spacing & shape
+  --sp-radius-sm: 6px;
+  --sp-radius-md: 10px;
+  --sp-radius-lg: 16px;
+  --sp-radius-xl: 24px;
   --sp-tap: 44px;
 
-  /* Ionic overrides */
-  --ion-color-primary: #3DDC97;
-  --ion-color-primary-contrast: #0B0E10;
-  --ion-color-danger: #FF4D4D;
+  // Glassmorphism
+  --sp-glass-bg: rgba(16, 22, 28, 0.85);
+  --sp-glass-border: rgba(255, 255, 255, 0.06);
+  --sp-glass-blur: blur(20px);
+
+  // Ionic overrides
+  --ion-color-primary: #00E5A0;
+  --ion-color-primary-rgb: 0, 229, 160;
+  --ion-color-primary-contrast: #06080A;
+  --ion-color-primary-contrast-rgb: 6, 8, 10;
+  --ion-color-primary-shade: #00C98C;
+  --ion-color-primary-tint: #1AE8AE;
+  --ion-color-danger: #FF4060;
+  --ion-color-danger-rgb: 255, 64, 96;
   --ion-color-warning: #FFB020;
+  --ion-color-warning-rgb: 255, 176, 32;
+  --ion-color-medium: #8899AA;
   --ion-background-color: var(--sp-bg);
   --ion-text-color: var(--sp-text);
   --ion-toolbar-background: var(--sp-panel);
-  --ion-item-background: var(--sp-panel);
+  --ion-item-background: transparent;
   --ion-border-color: var(--sp-line);
   --ion-font-family: var(--sp-font-ui);
-
-  --ion-color-primary-rgb: 61, 220, 151;
-  --ion-color-danger-rgb: 255, 77, 77;
-  --ion-color-warning-rgb: 255, 176, 32;
 }
 
-.mono,
-.freq-display,
-.db,
-.q {
+// Utility classes
+.mono {
   font-family: var(--sp-font-mono);
   font-variant-numeric: tabular-nums;
 }
 
+.text-accent { color: var(--sp-accent); }
+.text-warn { color: var(--sp-warn); }
+.text-danger { color: var(--sp-danger); }
+.text-dim { color: var(--sp-text-dim); }
+
+// Global focus visible
 :focus-visible {
   outline: 2px solid var(--sp-accent);
   outline-offset: 2px;
+}
+
+// Smooth transitions
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+// Scrollbar styling
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sp-line-bright);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sp-text-dim);
 }

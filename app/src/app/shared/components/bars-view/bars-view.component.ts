@@ -239,23 +239,65 @@ export class BarsViewComponent implements OnInit, OnDestroy, OnChanges {
     const width = this.viewWidth;
     const height = this.viewHeight;
     const ctx = this.ctx;
-    const plotLeft = 10;
-    const plotRight = 12;
-    const plotTop = 12;
-    const plotBottom = 28;
+    const plotLeft = 38;   // space for dB labels
+    const plotRight = 8;
+    const plotTop = 8;
+    const plotBottom = 24;  // space for freq labels
     const plotWidth = Math.max(1, width - plotLeft - plotRight);
     const plotHeight = Math.max(1, height - plotTop - plotBottom);
     const plotBottomY = plotTop + plotHeight;
 
-    ctx.fillStyle = this.palette.bg;
+    // Background with subtle vignette
+    ctx.fillStyle = '#06080A';
     ctx.fillRect(0, 0, width, height);
 
+    const dbMin = this.displayDbMin;
+    const dbMax = this.displayDbMax;
+    const dbRange = dbMax - dbMin;
+
+    // Grid: horizontal dB lines + vertical frequency lines
     if (this.showGrid) {
-      ctx.strokeStyle = this.palette.grid;
+      // Horizontal dB grid lines with labels
       ctx.lineWidth = 1;
-      for (let i = 0; i <= 6; i++) {
-        const y = Math.round(plotTop + (plotHeight * i) / 6) + 0.5;
-        ctx.beginPath(); ctx.moveTo(plotLeft, y); ctx.lineTo(plotLeft + plotWidth, y); ctx.stroke();
+      const dbStep = this.getDbGridStep(dbRange);
+      const firstDb = Math.ceil(dbMin / dbStep) * dbStep;
+
+      for (let db = firstDb; db <= dbMax; db += dbStep) {
+        const y = plotBottomY - ((db - dbMin) / dbRange) * plotHeight;
+        const isMajor = db % (dbStep * 2) === 0 || db === 0;
+
+        ctx.strokeStyle = isMajor ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)';
+        ctx.beginPath();
+        ctx.moveTo(plotLeft, Math.round(y) + 0.5);
+        ctx.lineTo(plotLeft + plotWidth, Math.round(y) + 0.5);
+        ctx.stroke();
+
+        // dB label on Y-axis
+        if (isMajor) {
+          ctx.fillStyle = '#556677';
+          ctx.font = '9px "JetBrains Mono", Consolas, monospace';
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`${db}`, plotLeft - 6, y);
+        }
+      }
+
+      // Vertical frequency gridlines at ISO centers
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const isoFreqs = [31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+      const nyq = this.sampleRate / 2;
+
+      for (const freq of isoFreqs) {
+        if (freq > nyq * 0.95) continue;
+        const x = plotLeft + (Math.log2(freq / 20) / Math.log2(nyq / 20)) * plotWidth;
+        if (x < plotLeft || x > plotLeft + plotWidth) continue;
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.beginPath();
+        ctx.moveTo(Math.round(x) + 0.5, plotTop);
+        ctx.lineTo(Math.round(x) + 0.5, plotBottomY);
+        ctx.stroke();
       }
     }
 
@@ -263,51 +305,83 @@ export class BarsViewComponent implements OnInit, OnDestroy, OnChanges {
     if (!N) return;
 
     const gap = N > 80 ? 0 : 1;
-    const barW = Math.max(1, Math.floor((plotWidth - (N - 1) * gap) / N));
+    const barW = Math.max(2, Math.floor((plotWidth - (N - 1) * gap) / N));
     const stride = barW + gap;
     const usedWidth = stride * N - gap;
     const startX = plotLeft + Math.max(0, Math.floor((plotWidth - usedWidth) / 2));
 
-    const toDb = (mag: number) => 20 * Math.log10(Math.max(1e-12, mag));
-    const dbMin = this.displayDbMin;
-    const dbMax = this.displayDbMax;
-
-    const norm = (db: number) => Math.max(0, Math.min(1, (db - dbMin) / (dbMax - dbMin)));
+    const norm = (db: number) => Math.max(0, Math.min(1, (db - dbMin) / dbRange));
     const applyGamma = (x: number) => Math.pow(x, 1 / Math.max(0.1, this.gamma));
+
+    // Bar gradient cache
+    const barGrad = ctx.createLinearGradient(0, plotBottomY, 0, plotTop);
+    if (this.useColor) {
+      barGrad.addColorStop(0, this.palette.bar + '40');   // dim at base
+      barGrad.addColorStop(0.5, this.palette.bar);
+      barGrad.addColorStop(1, '#FFFFFF');                  // bright at peak
+    } else {
+      barGrad.addColorStop(0, '#555555');
+      barGrad.addColorStop(1, '#DDDDDD');
+    }
 
     for (let i = 0; i < N; i++) {
       const x = startX + i * stride;
 
-      const liveDb = this.bandRenderDb[i] ?? this.displayDbMin;
-      const holdDb = this.bandHoldRenderDb[i] ?? this.displayDbMin;
+      const liveDb = this.bandRenderDb[i] ?? dbMin;
+      const holdDb = this.bandHoldRenderDb[i] ?? dbMin;
       const h = Math.floor(applyGamma(norm(liveDb)) * plotHeight);
       const ph = Math.floor(applyGamma(norm(holdDb)) * plotHeight);
 
-      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      // Bar base track
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
       ctx.fillRect(x, plotBottomY - 2, barW, 2);
 
-      if (h > 0 && liveDb > dbMin + 0.5) {
-        ctx.fillStyle = this.useColor ? this.palette.bar : '#aaa';
+      // Main bar with gradient
+      if (h > 1 && liveDb > dbMin + 0.5) {
+        ctx.fillStyle = barGrad;
         ctx.fillRect(x, plotBottomY - h, barW, h);
       }
 
-      if (ph > 3 && holdDb > dbMin + 1) {
+      // Hold peak with glow
+      if (ph > 2 && holdDb > dbMin + 1) {
+        ctx.save();
+        ctx.shadowColor = this.palette.hold;
+        ctx.shadowBlur = 6;
         ctx.fillStyle = this.palette.hold;
         ctx.fillRect(x, plotBottomY - ph - 2, barW, 2);
+        ctx.restore();
       }
     }
 
-    ctx.fillStyle = '#8a8a8a';
-    ctx.font = '10px system-ui, sans-serif';
-    const labelsToShow = 8;
-    const step = Math.max(1, Math.ceil(N / labelsToShow));
-    for (let i = 0; i < N; i += step) {
-      const x = startX + i * stride;
-      const fc = Math.round(this.bands[i]?.fc ?? 0);
+    // Frequency labels at bottom
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#556677';
+    ctx.font = '9px "JetBrains Mono", Consolas, monospace';
+
+    for (let i = 0; i < N; i++) {
+      const fc = this.bands[i]?.fc ?? 0;
       if (!fc) continue;
-      const label = fc >= 1000 ? `${(fc / 1000).toFixed(fc % 1000 === 0 ? 0 : 1)}k` : `${fc}`;
-      ctx.fillText(label, x, height - 6);
+      // Show label for standard ISO-ish centers
+      const isStandard = [31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
+        .some(std => Math.abs(fc - std) / std < 0.15);
+      if (!isStandard && N > 20) continue;
+
+      const x = startX + i * stride + barW / 2;
+      const label = fc >= 1000
+        ? `${(fc / 1000).toFixed(fc % 1000 === 0 ? 0 : 1)}k`
+        : `${Math.round(fc)}`;
+      ctx.fillText(label, x, plotBottomY + 6);
     }
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  private getDbGridStep(dbRange: number): number {
+    if (dbRange > 60) return 10;
+    if (dbRange > 30) return 6;
+    return 4;
   }
 
   private resize = () => {

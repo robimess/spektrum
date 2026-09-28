@@ -21,8 +21,8 @@ const EPSILON = 1e-9;
 const LOW_LEVEL_RMS_DBFS = -72;
 const LOW_LEVEL_PEAK_DBFS = -58;
 const CLIPPING_LINEAR = 0.985;
-const FRAME_TIMEOUT_MS = 2000;
-const CLIPPING_HOLD_MS = 1500;
+const FRAME_TIMEOUT_MS = 800;    // fast detection for live use
+const CLIPPING_HOLD_MS = 400;    // short hold for measurement tool
 
 export function analyzeAudioFrame(frame: Float32Array): AudioSignalSnapshot {
   if (!frame?.length) {
