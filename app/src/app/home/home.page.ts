@@ -1,13 +1,11 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonContent, IonHeader, IonTitle, IonToolbar, IonButton, IonButtons, IonSelect, IonSelectOption, IonToggle, IonRange, IonItem, IonLabel, IonList, IonIcon, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonHeader, IonTitle, IonToolbar, IonButton, IonButtons, IonIcon, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   listOutline, micOutline, musicalNotesOutline, analyticsOutline, barChartOutline,
-  resizeOutline, pauseOutline, colorPaletteOutline, contrastOutline, downloadOutline,
-  refreshOutline, volumeHighOutline, colorWandOutline, warningOutline, informationCircleOutline,
-  alertCircleOutline, trashOutline, documentOutline, closeOutline, settingsOutline,
-  bulbOutline
+  downloadOutline, refreshOutline, warningOutline, informationCircleOutline,
+  alertCircleOutline, settingsOutline, bulbOutline
 } from 'ionicons/icons';
 import { Subscription } from 'rxjs';
 
@@ -52,12 +50,10 @@ const BARS_PALETTES: Record<PaletteName, BarsPalette> = {
   imports: [
     CommonModule, 
     IonContent, IonHeader, IonTitle, IonToolbar, IonButton, IonButtons,
-    IonSelect, IonSelectOption, IonToggle, IonRange, IonItem, IonLabel, IonList,
     IonIcon, IonSegment, IonSegmentButton,
     BarsViewComponent,
     FeedbackAlertComponent,
     MicSelectorComponent,
-    SettingsModalComponent,
   ],
 })
 export class HomePage implements OnInit, AfterViewInit, OnDestroy {
@@ -166,10 +162,8 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   constructor() {
     addIcons({
       listOutline, micOutline, musicalNotesOutline, analyticsOutline, barChartOutline,
-      resizeOutline, pauseOutline, colorPaletteOutline, contrastOutline, downloadOutline,
-      refreshOutline, volumeHighOutline, colorWandOutline, warningOutline, informationCircleOutline,
-      alertCircleOutline, trashOutline, documentOutline, closeOutline, settingsOutline,
-      bulbOutline
+      downloadOutline, refreshOutline, warningOutline, informationCircleOutline,
+      alertCircleOutline, settingsOutline, bulbOutline
     });
   }
 
