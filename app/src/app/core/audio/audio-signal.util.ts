@@ -18,8 +18,8 @@ export interface AudioSignalDiagnostics extends AudioSignalSnapshot {
 }
 
 const EPSILON = 1e-9;
-const LOW_LEVEL_RMS_DBFS = -72;
-const LOW_LEVEL_PEAK_DBFS = -58;
+const LOW_LEVEL_RMS_DBFS = -85;   // relaxed for mics without AGC
+const LOW_LEVEL_PEAK_DBFS = -70;  // was -58, too aggressive for measurement
 const CLIPPING_LINEAR = 0.985;
 const FRAME_TIMEOUT_MS = 800;    // fast detection for live use
 const CLIPPING_HOLD_MS = 400;    // short hold for measurement tool
