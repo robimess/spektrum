@@ -872,8 +872,14 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
         const srcIdx = c * bins + (bins - 1 - y);
         let v = flat[srcIdx];
         if (!Number.isFinite(v)) v = 0;
+        // Map WASM [0,1] to display range with gamma expansion
+        // WASM output is linear amplitude normalized to [-100dB, 0dB]
+        // Most real signals cluster in 0.01-0.5 range
+        // Gamma curve expands dark detail, compresses bright peaks
         v = (v - this.specNormMin) / Math.max(1e-6, this.specNormMax - this.specNormMin);
         if (v < 0) v = 0; else if (v > 1) v = 1;
+        // Apply gamma correction (sRGB-like) for perceptual uniformity
+        v = Math.pow(v, 0.45);
         const idx = (v * 255) | 0;
         const j = idx * 3;
         const y0 = Math.floor((y / bins) * plotHeightPx);

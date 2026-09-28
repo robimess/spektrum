@@ -378,32 +378,36 @@ export class SpectrogramService {
       throw new Error('AudioContext no inicializado.');
     }
 
-    const mix = new GainNode(this.audio, { gain: 0.32 });
+    const mix = new GainNode(this.audio, { gain: 0.7 });
     const mainTone = new OscillatorNode(this.audio, { type: 'sine', frequency: 880 });
     const highTone = new OscillatorNode(this.audio, { type: 'triangle', frequency: 3150 });
     const lowTone = new OscillatorNode(this.audio, { type: 'sine', frequency: 160 });
+    const sweepTone = new OscillatorNode(this.audio, { type: 'sawtooth', frequency: 440 });
     const pulse = new OscillatorNode(this.audio, { type: 'sine', frequency: 0.18 });
 
-    const mainGain = new GainNode(this.audio, { gain: 0.55 });
-    const highGain = new GainNode(this.audio, { gain: 0.14 });
-    const lowGain = new GainNode(this.audio, { gain: 0.08 });
-    const pulseDepth = new GainNode(this.audio, { gain: 0.18 });
-    const pulseOffset = new ConstantSourceNode(this.audio, { offset: 0.65 });
+    const mainGain = new GainNode(this.audio, { gain: 0.7 });
+    const highGain = new GainNode(this.audio, { gain: 0.35 });
+    const lowGain = new GainNode(this.audio, { gain: 0.25 });
+    const sweepGain = new GainNode(this.audio, { gain: 0.15 });
+    const pulseDepth = new GainNode(this.audio, { gain: 0.25 });
+    const pulseOffset = new ConstantSourceNode(this.audio, { offset: 0.75 });
 
     mainTone.connect(mainGain).connect(mix);
     highTone.connect(highGain).connect(mix);
     lowTone.connect(lowGain).connect(mix);
+    sweepTone.connect(sweepGain).connect(mix);
     pulse.connect(pulseDepth).connect(mainGain.gain);
     pulseOffset.connect(mainGain.gain);
 
     mainTone.start();
     highTone.start();
     lowTone.start();
+    sweepTone.start();
     pulse.start();
     pulseOffset.start();
 
-    this.demoSources = [mainTone, highTone, lowTone, pulse, pulseOffset];
-    this.demoNodes = [mainGain, highGain, lowGain, pulseDepth];
+    this.demoSources = [mainTone, highTone, lowTone, sweepTone, pulse, pulseOffset];
+    this.demoNodes = [mainGain, highGain, lowGain, sweepGain, pulseDepth];
 
     return mix;
   }
