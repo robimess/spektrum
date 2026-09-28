@@ -219,9 +219,16 @@ export class SpectrogramService {
 
       this.analyser.getFloatFrequencyData(this.fftDbArray);
       
+      // Noise gate: clamp bins below -90 dBFS to silence
+      // This prevents showing false energy in silent conditions
+      const noiseFloorDb = -90;
       for (let i = 0; i < this.fftDbArray.length; i++) {
         const db = this.fftDbArray[i];
-        this.fftMagLin[i] = Math.pow(10, db / 20);
+        if (db < noiseFloorDb) {
+          this.fftMagLin[i] = 0;
+        } else {
+          this.fftMagLin[i] = Math.pow(10, db / 20);
+        }
       }
       this.rawCb(this.fftMagLin, this.audio!.sampleRate);
     }
