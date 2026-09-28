@@ -7,7 +7,10 @@ import {
   IonRange, IonList, IonToggle, IonIcon, ModalController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { closeOutline } from 'ionicons/icons';
+import {
+  closeOutline, resizeOutline, pauseOutline, colorPaletteOutline,
+  contrastOutline, volumeHighOutline, colorWandOutline
+} from 'ionicons/icons';
 
 export interface SettingsResult {
   resolution: string;
@@ -52,7 +55,7 @@ export interface SettingsResult {
         <ion-item>
           <ion-icon name="resize-outline" slot="start"></ion-icon>
           <ion-label>Resolución</ion-label>
-          <ion-select interface="popover" [(ngModel)]="resolution">
+          <ion-select interface="action-sheet" [(ngModel)]="resolution">
             <ion-select-option value="octava">Octava</ion-select-option>
             <ion-select-option value="media">1/2 octava</ion-select-option>
             <ion-select-option value="tercio">1/3 octava</ion-select-option>
@@ -62,7 +65,7 @@ export interface SettingsResult {
         <ion-item>
           <ion-icon name="pause-outline" slot="start"></ion-icon>
           <ion-label>HOLD</ion-label>
-          <ion-select interface="popover" [(ngModel)]="holdMs">
+          <ion-select interface="action-sheet" [(ngModel)]="holdMs">
             <ion-select-option [value]="0">Off</ion-select-option>
             <ion-select-option [value]="500">0.5 s</ion-select-option>
             <ion-select-option [value]="1000">1 s</ion-select-option>
@@ -74,7 +77,7 @@ export interface SettingsResult {
         <ion-item>
           <ion-icon name="color-palette-outline" slot="start"></ion-icon>
           <ion-label>Paleta</ion-label>
-          <ion-select interface="popover" [(ngModel)]="palette">
+          <ion-select interface="action-sheet" [(ngModel)]="palette">
             <ion-select-option value="viridis">viridis</ion-select-option>
             <ion-select-option value="magma">magma</ion-select-option>
             <ion-select-option value="inferno">inferno</ion-select-option>
@@ -113,7 +116,7 @@ export interface SettingsResult {
 
         <ion-item>
           <ion-label>Duración mínima</ion-label>
-          <ion-select interface="popover" [(ngModel)]="feedbackMinDurationMs">
+          <ion-select interface="action-sheet" [(ngModel)]="feedbackMinDurationMs">
             <ion-select-option [value]="600">0.6 s</ion-select-option>
             <ion-select-option [value]="1000">1.0 s</ion-select-option>
             <ion-select-option [value]="1500">1.5 s</ion-select-option>
@@ -124,7 +127,7 @@ export interface SettingsResult {
 
         <ion-item>
           <ion-label>Rango mín. Hz</ion-label>
-          <ion-select interface="popover" [(ngModel)]="feedbackMinFreq">
+          <ion-select interface="action-sheet" [(ngModel)]="feedbackMinFreq">
             <ion-select-option [value]="80">80 Hz</ion-select-option>
             <ion-select-option [value]="125">125 Hz</ion-select-option>
             <ion-select-option [value]="250">250 Hz</ion-select-option>
@@ -134,7 +137,7 @@ export interface SettingsResult {
 
         <ion-item>
           <ion-label>Rango máx. Hz</ion-label>
-          <ion-select interface="popover" [(ngModel)]="feedbackMaxFreq">
+          <ion-select interface="action-sheet" [(ngModel)]="feedbackMaxFreq">
             <ion-select-option [value]="8000">8 kHz</ion-select-option>
             <ion-select-option [value]="12000">12 kHz</ion-select-option>
             <ion-select-option [value]="16000">16 kHz</ion-select-option>
@@ -145,7 +148,7 @@ export interface SettingsResult {
 
         <ion-item>
           <ion-label>Rol IA</ion-label>
-          <ion-select interface="popover" [(ngModel)]="userRole">
+          <ion-select interface="action-sheet" [(ngModel)]="userRole">
             <ion-select-option value="foh">FOH</ion-select-option>
             <ion-select-option value="monitors">Monitores</ion-select-option>
             <ion-select-option value="broadcast">Broadcast</ion-select-option>
@@ -162,7 +165,7 @@ export interface SettingsResult {
 
         <ion-item>
           <ion-label>Alcance</ion-label>
-          <ion-select interface="popover" [(ngModel)]="calibrationScope">
+          <ion-select interface="action-sheet" [(ngModel)]="calibrationScope">
             <ion-select-option value="device">Micrófono actual</ion-select-option>
             <ion-select-option value="global">Global</ion-select-option>
           </ion-select>
@@ -173,7 +176,7 @@ export interface SettingsResult {
         <ion-item>
           <ion-icon name="color-wand-outline" slot="start"></ion-icon>
           <ion-label>Tema</ion-label>
-          <ion-select interface="popover" [(ngModel)]="theme">
+          <ion-select interface="action-sheet" [(ngModel)]="theme">
             <ion-select-option value="dark">Oscuro</ion-select-option>
             <ion-select-option value="light">Claro</ion-select-option>
           </ion-select>
@@ -216,7 +219,10 @@ export class SettingsModalComponent {
   calibrationScope = 'device';
 
   constructor() {
-    addIcons({ closeOutline });
+    addIcons({
+      closeOutline, resizeOutline, pauseOutline, colorPaletteOutline,
+      contrastOutline, volumeHighOutline, colorWandOutline
+    });
   }
 
   dismiss() {
