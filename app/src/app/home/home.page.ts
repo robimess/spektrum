@@ -1150,32 +1150,31 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   };
 
   private updateSpectrogramContrast(flat: Float32Array) {
+    // The WASM spectrogram already outputs normalized [0,1] values.
+    // Use stable fixed-range normalization with slow adaptive floor/ceiling.
+    // This prevents the "breathing" effect of per-frame quantile-based scaling.
     if (!flat.length) return;
-    const values: number[] = [];
-    for (let i = 0; i < flat.length; i++) {
+
+    let min = 1, max = 0;
+    const len = flat.length;
+    for (let i = 0; i < len; i++) {
       const v = flat[i];
-      if (Number.isFinite(v)) values.push(Math.max(0, Math.min(1, v)));
-    }
-    if (values.length < 16) return;
-
-    values.sort((a, b) => a - b);
-    let nextMin = this.quantile(values, 0.05);
-    let nextMax = this.quantile(values, 0.995);
-    nextMin = Math.max(0, nextMin - 0.02);
-    nextMax = Math.min(1, nextMax + 0.01);
-
-    if ((nextMax - nextMin) < 0.12) {
-      const center = (nextMax + nextMin) * 0.5;
-      nextMin = Math.max(0, center - 0.06);
-      nextMax = Math.min(1, center + 0.06);
+      if (v < min) min = v;
+      if (v > max) max = v;
     }
 
-    const alpha = 0.2;
-    this.specNormMin += (nextMin - this.specNormMin) * alpha;
-    this.specNormMax += (nextMax - this.specNormMax) * alpha;
+    if (max <= min) return;
 
-    if ((this.specNormMax - this.specNormMin) < 0.08) {
-      this.specNormMin = Math.max(0, this.specNormMax - 0.08);
+    // Slow adaptive normalization — converges over ~60 frames (~1 second)
+    const alpha = 0.015;
+    this.specNormMin += (min - this.specNormMin) * alpha;
+    this.specNormMax += (max - this.specNormMax) * alpha;
+
+    // Ensure minimum range to avoid washed-out display
+    if ((this.specNormMax - this.specNormMin) < 0.15) {
+      const center = (this.specNormMax + this.specNormMin) * 0.5;
+      this.specNormMin = Math.max(0, center - 0.075);
+      this.specNormMax = Math.min(1, center + 0.075);
     }
   }
 
