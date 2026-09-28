@@ -48,7 +48,8 @@ describe('audio-signal.util', () => {
   });
 
   it('keeps low-level input distinct from clipping and no-signal', () => {
-    const snapshot = analyzeAudioFrame(new Float32Array([0.0001, -0.0002, 0.00015]));
+    // Very quiet signal: peak ~-88 dBFS, RMS ~-91 dBFS (below thresholds -70/-85)
+    const snapshot = analyzeAudioFrame(new Float32Array([0.00004, -0.00005, 0.00003]));
     const diagnostics = resolveAudioSignalDiagnostics({
       snapshot,
       lastFrameAt: 5_000,

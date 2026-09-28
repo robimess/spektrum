@@ -102,7 +102,7 @@ export class SpectrogramService {
       cfg.min_db      = -100;
       cfg.max_db      = 0;
       cfg.bins_out    = binsOut;
-      cfg.window_kind = 2;
+      cfg.window_kind = 0; // Hann — matches AnalyserNode's built-in window
 
       this.spec = new this.wasmMod.WasmSpectrogram(cfg);
       this.captureProfile = this.inputMode === 'microphone'

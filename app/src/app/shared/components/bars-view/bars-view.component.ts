@@ -155,13 +155,18 @@ export class BarsViewComponent implements OnInit, OnDestroy, OnChanges {
 
     const r = Math.max(0, Math.min(8, this.freqSmoothRadius | 0));
     if (r > 0) {
+      // Smooth in power domain (magnitude²) for spectral correctness
       const tmp = new Float32Array(N);
       for (let i = 0; i < N; i++) {
-        let s = 0, c = 0;
+        let powerSum = 0, c = 0;
         const a = Math.max(0, i - r);
         const b = Math.min(N - 1, i + r);
-        for (let k = a; k <= b; k++) { s += this.rawMag[k]; c++; }
-        tmp[i] = s / c;
+        for (let k = a; k <= b; k++) {
+          const m = this.rawMag[k];
+          powerSum += m * m;
+          c++;
+        }
+        tmp[i] = Math.sqrt(powerSum / c);
       }
       this.magSmoothed.set(tmp);
     } else {
