@@ -1,4 +1,4 @@
-import { WindowType } from '../models/audio.types';
+export type WindowType = 'hann' | 'hamming' | 'blackman' | 'blackman-harris' | 'rectangular';
 
 type ExtendedMediaTrackConstraints = MediaTrackConstraints & { latency?: ConstrainDouble };
 type ExtendedMediaTrackSettings = MediaTrackSettings & { latency?: number };

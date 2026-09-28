@@ -61,6 +61,12 @@ export class FeedbackLogModalComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  async exportTxt() {
+    const result = await this.feedbackLog.downloadTxt();
+    this.exportMessage = result.message;
+    this.cdr.markForCheck();
+  }
+
   clearAll() {
     const confirmed = typeof window === 'undefined' || typeof window.confirm !== 'function'
       ? true

@@ -187,6 +187,53 @@ export class FeedbackLogService {
     };
   }
 
+  exportToTxt(): string {
+    const lines = this.logs.map(log => {
+      const parts = [
+        `[${log.isoTimestamp}]`,
+        `${log.frequency} Hz`,
+        `${log.magnitudeDb.toFixed(1)} dB`,
+        `${log.duration}ms`,
+      ];
+      if ((log.occurrences ?? 1) > 1) parts.push(`x${log.occurrences}`);
+      return parts.join(' | ');
+    });
+    return `SPEKTRUM Feedback Log\n${'='.repeat(40)}\nEventos: ${this.logs.length}\n${'='.repeat(40)}\n\n${lines.join('\n')}`;
+  }
+
+  async downloadTxt(): Promise<LogExportResult> {
+    const txt = this.exportToTxt();
+    const fileName = `spektrum-feedback-log-${Date.now()}.txt`;
+
+    try {
+      if (typeof document !== 'undefined' && typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        try {
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName;
+          link.click();
+          return {
+            method: 'download',
+            success: true,
+            message: 'TXT exportado correctamente.',
+          };
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+      }
+    } catch (e) {
+      console.warn('No se pudo descargar el TXT.', e);
+    }
+
+    return {
+      method: 'inline',
+      success: false,
+      message: 'No fue posible exportar automaticamente.',
+    };
+  }
+
   private saveToStorage() {
     try {
       localStorage.setItem('spektrum-feedback-logs', JSON.stringify(this.logs));

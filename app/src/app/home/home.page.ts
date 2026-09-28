@@ -6,7 +6,8 @@ import {
   listOutline, micOutline, musicalNotesOutline, analyticsOutline, barChartOutline,
   resizeOutline, pauseOutline, colorPaletteOutline, contrastOutline, downloadOutline,
   refreshOutline, volumeHighOutline, colorWandOutline, warningOutline, informationCircleOutline,
-  alertCircleOutline, trashOutline, documentOutline, closeOutline, settingsOutline
+  alertCircleOutline, trashOutline, documentOutline, closeOutline, settingsOutline,
+  bulbOutline
 } from 'ionicons/icons';
 import { Subscription } from 'rxjs';
 
@@ -25,6 +26,7 @@ import { BarsViewComponent } from '../shared/components/bars-view/bars-view.comp
 import { FeedbackAlertComponent } from '../shared/components/feedback-alert/feedback-alert.component';
 import { FeedbackLogModalComponent } from '../shared/components/feedback-log-modal/feedback-log-modal.component';
 import { MicSelectorComponent } from '../shared/components/mic-selector/mic-selector.component';
+import { SettingsModalComponent, SettingsResult } from '../shared/components/settings-modal/settings-modal.component';
 
 type PresetName = 'octava' | 'media' | 'tercio';
 type ViewMode = 'spectrogram' | 'bars';
@@ -55,6 +57,7 @@ const BARS_PALETTES: Record<PaletteName, BarsPalette> = {
     BarsViewComponent,
     FeedbackAlertComponent,
     MicSelectorComponent,
+    SettingsModalComponent,
   ],
 })
 export class HomePage implements OnInit, AfterViewInit, OnDestroy {
@@ -165,7 +168,8 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       listOutline, micOutline, musicalNotesOutline, analyticsOutline, barChartOutline,
       resizeOutline, pauseOutline, colorPaletteOutline, contrastOutline, downloadOutline,
       refreshOutline, volumeHighOutline, colorWandOutline, warningOutline, informationCircleOutline,
-      alertCircleOutline, trashOutline, documentOutline, closeOutline, settingsOutline
+      alertCircleOutline, trashOutline, documentOutline, closeOutline, settingsOutline,
+      bulbOutline
     });
   }
 
@@ -625,6 +629,52 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
       this.logModal = undefined;
       this.logModalOpening = false;
     }
+  }
+
+  async openSettings() {
+    const modal = await this.modalCtrl.create({
+      id: 'settings-modal',
+      component: SettingsModalComponent,
+      componentProps: {
+        resolution: this.preset,
+        holdMs: this.holdMs,
+        palette: this.palette,
+        gamma: this.gamma,
+        feedbackThresholdDb: this.feedbackThresholdDb,
+        feedbackMinDurationMs: this.feedbackMinDurationMs,
+        feedbackMinFreq: this.feedbackMinFreq,
+        feedbackMaxFreq: this.feedbackMaxFreq,
+        userRole: this.userRole,
+        theme: this.theme,
+        useColor: this.useColor,
+        showGrid: this.showGrid,
+        calibrationEnabled: this.calibrationEnabled,
+        calibrationScope: this.calibrationScope,
+      },
+    });
+
+    await modal.present();
+    const { data, role } = await modal.onDidDismiss<SettingsResult>();
+    if (role === 'apply' && data) {
+      this.applySettings(data);
+    }
+  }
+
+  private applySettings(s: SettingsResult) {
+    this.onThemeChange(s.theme);
+    this.onToggleColor(s.useColor);
+    this.onToggleGrid(s.showGrid);
+    this.onPalette(s.palette);
+    this.onGamma(s.gamma);
+    this.onPreset(s.resolution);
+    this.onHoldChange(s.holdMs);
+    this.onFeedbackThresholdChange(s.feedbackThresholdDb);
+    this.onFeedbackMinDurationChange(s.feedbackMinDurationMs);
+    this.onFeedbackRangeChange('min', s.feedbackMinFreq);
+    this.onFeedbackRangeChange('max', s.feedbackMaxFreq);
+    this.onUserRoleChange(s.userRole);
+    this.onCalibrationToggle(s.calibrationEnabled);
+    this.onCalibrationScopeChange(s.calibrationScope);
   }
 
   onMicSelected(deviceId: string) {
