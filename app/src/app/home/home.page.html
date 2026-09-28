@@ -78,9 +78,11 @@
         <ion-segment [value]="inputMode" (ionChange)="onInputModeChange($any($event.detail.value))" class="toolbar-segment">
           <ion-segment-button value="microphone">
             <ion-icon name="mic-outline"></ion-icon>
+            <ion-label>Mic</ion-label>
           </ion-segment-button>
           <ion-segment-button value="demo">
             <ion-icon name="musical-notes-outline"></ion-icon>
+            <ion-label>Demo</ion-label>
           </ion-segment-button>
         </ion-segment>
       </div>
@@ -100,9 +102,11 @@
         <ion-segment [value]="view" (ionChange)="onView($any($event.detail.value))" class="toolbar-segment">
           <ion-segment-button value="spectrogram">
             <ion-icon name="analytics-outline"></ion-icon>
+            <ion-label>Espectro</ion-label>
           </ion-segment-button>
           <ion-segment-button value="bars">
             <ion-icon name="bar-chart-outline"></ion-icon>
+            <ion-label>Barras</ion-label>
           </ion-segment-button>
         </ion-segment>
       </div>

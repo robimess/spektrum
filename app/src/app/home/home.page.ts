@@ -1,6 +1,6 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonContent, IonHeader, IonTitle, IonToolbar, IonButton, IonButtons, IonIcon, IonSegment, IonSegmentButton, ModalController } from '@ionic/angular/standalone';
+import { IonContent, IonHeader, IonTitle, IonToolbar, IonButton, IonButtons, IonIcon, IonSegment, IonSegmentButton, IonLabel, ModalController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   listOutline, micOutline, musicalNotesOutline, analyticsOutline, barChartOutline,
@@ -50,7 +50,7 @@ const BARS_PALETTES: Record<PaletteName, BarsPalette> = {
   imports: [
     CommonModule, 
     IonContent, IonHeader, IonTitle, IonToolbar, IonButton, IonButtons,
-    IonIcon, IonSegment, IonSegmentButton,
+    IonIcon, IonSegment, IonSegmentButton, IonLabel,
     BarsViewComponent,
     FeedbackAlertComponent,
     MicSelectorComponent,
