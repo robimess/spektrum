@@ -1150,32 +1150,12 @@ export class HomePage implements OnInit, AfterViewInit, OnDestroy {
   };
 
   private updateSpectrogramContrast(flat: Float32Array) {
-    // The WASM spectrogram already outputs normalized [0,1] values.
-    // Use stable fixed-range normalization with slow adaptive floor/ceiling.
-    // This prevents the "breathing" effect of per-frame quantile-based scaling.
-    if (!flat.length) return;
-
-    let min = 1, max = 0;
-    const len = flat.length;
-    for (let i = 0; i < len; i++) {
-      const v = flat[i];
-      if (v < min) min = v;
-      if (v > max) max = v;
-    }
-
-    if (max <= min) return;
-
-    // Slow adaptive normalization — converges over ~60 frames (~1 second)
-    const alpha = 0.015;
-    this.specNormMin += (min - this.specNormMin) * alpha;
-    this.specNormMax += (max - this.specNormMax) * alpha;
-
-    // Ensure minimum range to avoid washed-out display
-    if ((this.specNormMax - this.specNormMin) < 0.15) {
-      const center = (this.specNormMax + this.specNormMin) * 0.5;
-      this.specNormMin = Math.max(0, center - 0.075);
-      this.specNormMax = Math.min(1, center + 0.075);
-    }
+    // The WASM spectrogram already outputs normalized [0,1] values
+    // where 0 = min_db (-100 dBFS) and 1 = max_db (0 dBFS).
+    // Use fixed contrast range — no adaptive normalization needed.
+    // This prevents the display from collapsing to a uniform color.
+    this.specNormMin = 0;
+    this.specNormMax = 1;
   }
 
   private getSpectrogramColumnImage(): ImageData {
